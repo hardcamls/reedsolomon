@@ -1,3 +1,4 @@
+open Base
 open Hardcaml
 open Signal
 
@@ -45,7 +46,7 @@ struct
         ~read_port:{ read_clock = clocking.clock; read_address = ra; read_enable = rd }
     in
     let q =
-      Array.init N.n (fun i -> select q (((i + 1) * Gfh.bits) - 1) (i * Gfh.bits))
+      Array.init N.n ~f:(fun i -> select q (((i + 1) * Gfh.bits) - 1) (i * Gfh.bits))
     in
     O.{ q }
   ;;

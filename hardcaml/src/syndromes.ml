@@ -1,3 +1,4 @@
+open Base
 open Hardcaml
 open Signal
 
@@ -36,7 +37,7 @@ struct
   ;;
 
   let _syndromes ~spec ~enable ~first ~x =
-    Array.init (2 * Rp.t) (fun i -> syndrome ~spec ~root:(Rs.root i) ~enable ~first ~x)
+    Array.init (2 * Rp.t) ~f:(fun i -> syndrome ~spec ~root:(Rs.root i) ~enable ~first ~x)
   ;;
 
   let create ~scale { I.clocking; enable; first; last; x } =
@@ -46,8 +47,8 @@ struct
     let eval c x =
       let len = Array.length x in
       let cmul c i x = Gfh.cmul Gfs.(c **: i) x in
-      let a = Array.mapi (fun i x -> cmul c (len - i - 1) x) x in
-      let a = Array.map (fun x -> reg spec ~enable x) a in
+      let a = Array.mapi ~f:(fun i x -> cmul c (len - i - 1) x) x in
+      let a = Array.map ~f:(fun x -> reg spec ~enable x) a in
       let add_p a = reg spec ~enable (reduce ~f:Gfh.( +: ) a) in
       tree ~arity:n_tree ~f:add_p (Array.to_list a)
     in
@@ -59,13 +60,13 @@ struct
     let first = pipeline spec ~enable ~n:(1 + Util.tree_depth n_tree n) first in
     let last = pipeline spec ~enable ~n:(2 + Util.tree_depth n_tree n) last in
     let syndromes =
-      Array.init (2 * Rp.t) (fun i ->
+      Array.init (2 * Rp.t) ~f:(fun i ->
         let root = Rs.root i in
         syndrome enable first Gfs.(root **: n) root x)
     in
     { O.valid = reg spec ~enable last
     ; syndromes =
-        Array.init (Array.length syndromes) (fun i ->
+        Array.init (Array.length syndromes) ~f:(fun i ->
           let iroot = Gfs.(inv (Rs.root i **: scale)) in
           reg
             spec

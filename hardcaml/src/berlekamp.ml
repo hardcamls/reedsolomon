@@ -1,3 +1,4 @@
+open Base
 open Hardcaml
 open Signal
 
@@ -29,8 +30,8 @@ struct
       if idx > hi
       then []
       else if idx < lo
-      then ls (List.tl l) (idx + 1) lo hi
-      else List.hd l :: ls (List.tl l) (idx + 1) lo hi
+      then ls (List.tl_exn l) (idx + 1) lo hi
+      else List.hd_exn l :: ls (List.tl_exn l) (idx + 1) lo hi
     in
     ls l 0 lo hi
   ;;
@@ -38,7 +39,7 @@ struct
   (* discrepancy unit (DC) *)
   let rDC spec enable load syndromes lambda =
     (* order syndromes s[0],s[2t-1],...,s[2],s[1] *)
-    let s = List.(hd syndromes :: rev (tl syndromes)) in
+    let s = List.hd_exn syndromes :: List.rev (List.tl_exn syndromes) in
     (* connect up registers *)
     let rec f d s =
       match s with
@@ -49,18 +50,18 @@ struct
     in
     let s0 = wire Gfh.bits in
     let s = f s0 s in
-    let s_fb = List.(hd (rev s)) in
+    let s_fb = List.hd_exn (List.rev s) in
     let () = s0 <== s_fb in
     let s = lselect s 0 Rp.t in
     (* generate multipliers *)
-    let m = List.map2 Gfh.( *: ) s lambda in
+    let m = List.map2_exn ~f:Gfh.( *: ) s lambda in
     (* adder tree *)
     tree ~arity:2 ~f:(reduce ~f:Gfh.( +: )) m
   ;;
 
   (* PE0 unit *)
   let pe0 n spec enable init delta gamma mc b =
-    let ( -- ) s name = s -- (name ^ string_of_int n) in
+    let ( -- ) s name = s -- (name ^ Int.to_string n) in
     let spec = Reg_spec.override ~clear_to:init spec in
     (* lambda update *)
     let l =
@@ -125,7 +126,7 @@ struct
         let delta' = pe1_2 clear enable first last gamma s delta delta' mc in
         delta' :: f (fst delta') (n + 1) s'
     in
-    let delta' = List.(rev (f (zero Gfh.bits) 0 (rev syndromes))) in
+    let delta' = List.rev (f (zero Gfh.bits) 0 (List.rev syndromes)) in
     delta'
   ;;
 
@@ -168,7 +169,7 @@ struct
     let mc, gamma = ctrl spec enable delta0 in
     let lambda = pe0s spec enable delta0 gamma mc in
     let delta' = pe1s spec enable gamma syndromes delta0 mc in
-    let () = delta0 <== List.hd delta' in
+    let () = delta0 <== List.hd_exn delta' in
     lambda
   ;;
 
@@ -176,16 +177,19 @@ struct
     let spec = Clocking.spec clocking in
     let syndromes =
       List.concat
-        [ syndromes; Array.(to_list (make Rp.t (zero Gfh.bits))); [ one Gfh.bits ] ]
+        [ syndromes
+        ; Array.to_list (Array.create ~len:Rp.t (zero Gfh.bits))
+        ; [ one Gfh.bits ]
+        ]
     in
     let delta0 = wire Gfh.bits in
     let mc, gamma =
       ctrl (Reg_spec.override spec ~clear:(clocking.clear |: first)) enable delta0
     in
     let delta' = pe1s_2 spec enable first last gamma syndromes delta0 mc in
-    let () = delta0 <== fst (List.hd delta') in
-    ( List.map snd (lselect delta' 0 (Rp.t - 1))
-    , List.map snd (lselect delta' Rp.t (2 * Rp.t)) )
+    let () = delta0 <== fst (List.hd_exn delta') in
+    ( List.map ~f:snd (lselect delta' 0 (Rp.t - 1))
+    , List.map ~f:snd (lselect delta' Rp.t (2 * Rp.t)) )
   ;;
 
   let create { I.clocking; enable; first; last; syndromes } =

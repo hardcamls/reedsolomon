@@ -1,5 +1,5 @@
 (* galois fields of type 2^n in hardware *)
-
+open Base
 open Hardcaml
 
 module Make (B : Comb.S) (P : Reedsolomon.Galois.Table.Params) = struct
@@ -12,7 +12,7 @@ module Make (B : Comb.S) (P : Reedsolomon.Galois.Table.Params) = struct
   let alpha = B.of_int ~width:bits G.alpha
   let zero = B.of_int ~width:bits 0
   let one = B.of_int ~width:bits 1
-  let enum n f = Array.to_list (Array.init n (fun i -> B.of_int ~width:bits (f i)))
+  let enum n f = Array.to_list (Array.init n ~f:(fun i -> B.of_int ~width:bits (f i)))
   let log x = B.mux x (enum n_elems G.log)
   let antilog x = B.mux x (enum n_elems G.antilog)
   let inv x = B.mux x (enum n_elems G.inv)
@@ -26,7 +26,9 @@ module Make (B : Comb.S) (P : Reedsolomon.Galois.Table.Params) = struct
       B.mux
         B.(ue a' +: ue b')
         (Array.to_list
-           (Array.init ((2 * n_elems) - 3) (fun i -> B.of_int ~width:bits (G.antilog i))))
+           (Array.init
+              ((2 * n_elems) - 3)
+              ~f:(fun i -> B.of_int ~width:bits (G.antilog i))))
     in
     B.mux2 B.(a ==:. 0 |: (b ==:. 0)) zero c
   ;;
@@ -36,7 +38,7 @@ module Make (B : Comb.S) (P : Reedsolomon.Galois.Table.Params) = struct
     let a', b' = log a, log b in
     let x =
       Array.to_list
-        (Array.init (n_elems - 1) (fun i -> B.of_int ~width:bits (G.antilog i)))
+        (Array.init (n_elems - 1) ~f:(fun i -> B.of_int ~width:bits (G.antilog i)))
     in
     let c = B.mux B.(ue a' -: ue b') (x @ [ zero; zero ] @ x) in
     B.mux2 B.(a ==:. 0) zero c
@@ -96,8 +98,8 @@ module Make (B : Comb.S) (P : Reedsolomon.Galois.Table.Params) = struct
     let m = (2 * n) - 1 in
     (* create shifted vectors based on the constant *)
     let shf =
-      Array.init m (fun j ->
-        Array.init n (fun i ->
+      Array.init m ~f:(fun j ->
+        Array.init n ~f:(fun i ->
           let x = j - i in
           if j < i || j >= i + n || c land (1 lsl x) = 0 then 0 else 1))
     in
@@ -109,18 +111,18 @@ module Make (B : Comb.S) (P : Reedsolomon.Galois.Table.Params) = struct
         if Bits.(is_vdd x.:(j))
         then
           for k = 0 to n - 1 do
-            shf.(j).(k) <- (shf.(j).(k) + shf.(i).(k)) mod 2
+            shf.(j).(k) <- (shf.(j).(k) + shf.(i).(k)) land 1
           done
       done
     done;
-    let shf = Array.init n (fun i -> shf.(i)) in
+    let shf = Array.init n ~f:(fun i -> shf.(i)) in
     fun x ->
       let x =
         Array.map
-          (fun s ->
-            let x = Array.mapi (fun j s -> if s = 0 then [] else [ B.bit x j ]) s in
+          ~f:(fun s ->
+            let x = Array.mapi ~f:(fun j s -> if s = 0 then [] else [ B.bit x j ]) s in
             let x = x |> Array.to_list |> List.concat in
-            if x = [] then B.gnd else B.reduce ~f:B.( ^: ) x)
+            if List.is_empty x then B.gnd else B.reduce ~f:B.( ^: ) x)
           shf
       in
       x |> Array.to_list |> B.concat_lsb

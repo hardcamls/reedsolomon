@@ -1,3 +1,4 @@
+open Base
 open Hardcaml
 open Signal
 
@@ -85,7 +86,7 @@ struct
     let start = reg last in
     let ch = Chien.create { Chien.I.clocking; enable; start; lambda = bm.l } in
     (* forney *)
-    let l = Array.init ((Rp.t + 1) / 2) (fun i -> bm.l.((i * 2) + 1)) in
+    let l = Array.init ((Rp.t + 1) / 2) ~f:(fun i -> bm.l.((i * 2) + 1)) in
     let fy =
       Forney.Parallel.create
         { Forney.Parallel.I.clocking
@@ -101,7 +102,7 @@ struct
     let () = fifo_re <== fy.frdy.(0) in
     (* dont need array? *)
     let corrected =
-      Array.init N.n (fun j ->
+      Array.init N.n ~f:(fun j ->
         mux2 (reg fy.ferr.(j)) (fifo.q.(j) ^: reg fy.emag.(j)) fifo.q.(j))
     in
     let ordy = reg fy.frdy.(0) in
@@ -110,7 +111,7 @@ struct
         let sum =
           reduce
             ~f:( +: )
-            (Array.to_list (Array.map (fun x -> uresize x Gfh.bits) fy.ferr))
+            (Array.to_list (Array.map ~f:(fun x -> uresize x Gfh.bits) fy.ferr))
         in
         d +: sum)
     in

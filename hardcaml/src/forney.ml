@@ -1,3 +1,4 @@
+open Base
 open Hardcaml
 open Signal
 
@@ -83,8 +84,8 @@ struct
       let pipe n d = pipeline spec ~enable ~n d in
       (* parallel polynomial evaluation *)
       let eval poly x =
-        let a = Array.mapi Gfh.(fun pow coef -> coef *: cpow x pow) poly in
-        let a = Array.map (fun d -> reg d) a in
+        let a = Array.mapi ~f:Gfh.(fun pow coef -> coef *: cpow x pow) poly in
+        let a = Array.map ~f:(fun d -> reg d) a in
         let add_p a = reg (reduce ~f:Gfh.( +: ) a) in
         tree ~arity:n_tree ~f:add_p (Array.to_list a)
       in
@@ -130,14 +131,14 @@ struct
 
     let create { I.clocking; enable; vld; err; v; l; x } =
       let o =
-        Array.init N.n (fun j ->
+        Array.init N.n ~f:(fun j ->
           Forney.create
             { Forney.I.clocking; enable; vld = vld.(j); err = err.(j); v; l; x = x.(j) })
       in
       O.
-        { emag = Array.map (fun { Forney.O.emag; _ } -> emag) o
-        ; frdy = Array.map (fun { Forney.O.frdy; _ } -> frdy) o
-        ; ferr = Array.map (fun { Forney.O.ferr; _ } -> ferr) o
+        { emag = Array.map ~f:(fun { Forney.O.emag; _ } -> emag) o
+        ; frdy = Array.map ~f:(fun { Forney.O.frdy; _ } -> frdy) o
+        ; ferr = Array.map ~f:(fun { Forney.O.ferr; _ } -> ferr) o
         }
     ;;
   end

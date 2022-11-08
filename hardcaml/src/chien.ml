@@ -1,3 +1,4 @@
+open Base
 open Hardcaml
 open Signal
 
@@ -15,7 +16,7 @@ struct
       reg_fb (Clocking.spec ~clear_to:l clocking) ~enable ~width:Gfh.bits ~f:(fun l ->
         Gfh.cmul (Gfs.antilog i) l)
     in
-    let l = List.mapi f lambda in
+    let l = List.mapi ~f lambda in
     tree ~arity:2 ~f:(reduce ~f:Gfh.( +: )) l
   ;;
 
@@ -50,11 +51,11 @@ struct
               ]
           ])
     in
-    ( Array.init p (fun i ->
+    ( Array.init p ~f:(fun i ->
         if ((cycles_per_codeword - 1) * p) + i >= rp_n
         then mux2 cnt_last gnd vld.value
         else vld.value)
-    , Array.init p (fun i ->
+    , Array.init p ~f:(fun i ->
         let init = of_int ~width:Gfh.bits (1 + i) in
         reg_fb
           (Reg_spec.override spec ~clear_to:init)
@@ -87,20 +88,20 @@ struct
   let create { I.clocking; enable; start; lambda } =
     let spec = Clocking.spec clocking in
     let p = N.n in
-    let lambda' = Array.map (fun _ -> wire Gfh.bits) lambda in
+    let lambda' = Array.map ~f:(fun _ -> wire Gfh.bits) lambda in
     let f i j l = Gfh.cmul (Gfs.antilog (i * j)) l in
-    let c = Array.init p (fun i -> Array.mapi (f (i + 1)) lambda') in
+    let c = Array.init p ~f:(fun i -> Array.mapi ~f:(f (i + 1)) lambda') in
     let fb = c.(p - 1) in
     let () =
       Array.iteri
-        (fun i l -> lambda'.(i) <== mux2 start l (reg spec ~enable fb.(i)))
+        ~f:(fun i l -> lambda'.(i) <== mux2 start l (reg spec ~enable fb.(i)))
         lambda
     in
     let eval =
-      Array.map (fun c -> tree ~arity:2 ~f:(reduce ~f:Gfh.( +: )) (Array.to_list c)) c
+      Array.map ~f:(fun c -> tree ~arity:2 ~f:(reduce ~f:Gfh.( +: )) (Array.to_list c)) c
     in
     let evld, eloc = chien_ctrl spec ~p ~enable ~start in
-    let eerr = Array.init p (fun j -> eval.(j) ==:. 0 &: evld.(j)) in
+    let eerr = Array.init p ~f:(fun j -> eval.(j) ==:. 0 &: evld.(j)) in
     { O.eval; eloc; evld; eerr }
   ;;
 end

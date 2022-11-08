@@ -1,4 +1,6 @@
 (** hardware reed-solomon codec *)
+open! Base
+
 open Hardcaml
 
 module Make (Gp : Reedsolomon.Galois.Table.Params) (Rp : Reedsolomon.Codec.RsParams) : sig

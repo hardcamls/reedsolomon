@@ -1,3 +1,4 @@
+open! Base
 open Hardcaml
 
 module M (Gp : Reedsolomon.Galois.Table.Params) (Rp : Reedsolomon.Codec.RsParams) = struct
