@@ -1,0 +1,7 @@
+(library
+ (name test_hardcaml_reedsolomon)
+ (flags (:standard -w -27-32-33-35-39-50))
+ (libraries core hardcaml reedsolomon hardcaml_reedsolomon hardcaml_waveterm)
+ (inline_tests)
+ (preprocess (pps ppx_jane ppx_deriving_hardcaml)))
+

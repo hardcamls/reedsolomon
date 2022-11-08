@@ -1,0 +1,110 @@
+open Core
+open Hardcaml
+
+module Codec_args = struct
+  let default_poly idx =
+    if idx < 2
+    then raise_s [%message "number of bits must be > 1"]
+    else
+      Array.foldi
+        Reedsolomon.Galois.GF2N.gf2_prim_polys.(idx)
+        ~init:0
+        ~f:(fun idx acc b -> acc + if b = 0 then 0 else b lsl idx)
+  ;;
+
+  let args =
+    [%map_open.Command
+      let n = flag "-n" (optional int) ~doc:"NUM_SYMBOLS number of symbols per codeword"
+      and t = flag "-t" (optional int) ~doc:"PARITY_BYTES numbers of parity bytes"
+      and b =
+        flag
+          "-b"
+          (optional_with_default 0 int)
+          ~doc:"INITAIL_ROOT starting root of generator"
+      and prim_poly = flag "-poly" (optional int) ~doc:"POLY primitive polynomial"
+      and prim_elt =
+        flag "-elt" (optional_with_default 2 int) ~doc:"ELT primitive element"
+      in
+      let n = Option.value ~default:255 n in
+      if not (Int.is_pow2 (n + 1))
+      then
+        raise_s
+          [%message
+            "n must be a equal to a power of two minus 1 (ie 3, 7, 15...255 etc)"
+              (n : int)];
+      let t = Option.value ~default:8 t in
+      if 2 * t >= n
+      then raise_s [%message "t is too large for given b" (t : int) (n : int)];
+      let m = Int.ceil_log2 (n + 1) in
+      let prim_poly =
+        match prim_poly with
+        | None -> default_poly m
+        | Some prim_poly -> prim_poly
+      in
+      { Reedsolomon.Iter.m; k = n - (2 * t); t; n; b; prim_poly; prim_elt }]
+  ;;
+end
+
+let command_encoder =
+  Command.basic
+    ~summary:"Generate encoder"
+    [%map_open.Command
+      let codec_args = Codec_args.args in
+      fun () ->
+        let module Gp = struct
+          let pp = codec_args.prim_poly
+          let pe = codec_args.prim_elt
+        end
+        in
+        let module Rp = struct
+          let k = codec_args.k
+          let t = codec_args.t
+          let b = codec_args.b
+        end
+        in
+        let module Hw = Hardcaml_reedsolomon.Codec.Make (Gp) (Rp) in
+        let module Circuit = Hardcaml.Circuit.With_interface (Hw.Encoder.I) (Hw.Encoder.O)
+        in
+        Rtl.print Verilog (Circuit.create_exn ~name:"encoder" Hw.Encoder.create)]
+;;
+
+let command_decoder =
+  Command.basic
+    ~summary:"Generate decoder"
+    [%map_open.Command
+      let codec_args = Codec_args.args
+      and parallelism =
+        flag
+          "-parallelism"
+          (optional_with_default 1 int)
+          ~doc:"PARALLELISM Code word parallelism - symbols processed per cycle"
+      in
+      fun () ->
+        let module Gp = struct
+          let pp = codec_args.prim_poly
+          let pe = codec_args.prim_elt
+        end
+        in
+        let module Rp = struct
+          let k = codec_args.k
+          let t = codec_args.t
+          let b = codec_args.b
+        end
+        in
+        let module N = struct
+          let n = parallelism
+        end
+        in
+        let module Hw = Hardcaml_reedsolomon.Codec.Make (Gp) (Rp) in
+        let module Decoder = Hw.Decoder (N) in
+        let module Circuit =
+          Hardcaml.Circuit.With_interface (Decoder.Decode.I) (Decoder.Decode.O)
+        in
+        Rtl.print Verilog (Circuit.create_exn ~name:"encoder" Decoder.Decode.create)]
+;;
+
+let command =
+  Command.group
+    ~summary:"Verilog generation"
+    [ "encoder", command_encoder; "decoder", command_decoder ]
+;;

@@ -1,0 +1,5 @@
+(executable
+ (name rs)
+ (libraries core core_unix.command_unix test_hardcaml_reedsolomon hardcaml_waveterm.interactive)
+ (promote)
+ (preprocess (pps ppx_jane)))

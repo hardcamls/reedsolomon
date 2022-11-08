@@ -1,0 +1,6 @@
+(library
+ (name reedsolomon)
+ (flags (:standard -w -27-32-33-35-39-50))
+ (public_name reedsolomon.model)
+ (preprocess (pps ppx_jane)))
+
