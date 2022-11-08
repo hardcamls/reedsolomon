@@ -1,6 +1,5 @@
 (library
  (name hardcaml_reedsolomon)
- (flags (:standard -w -27-32-33-35-39-50))
  (public_name reedsolomon.hardcaml)
  (libraries hardcaml reedsolomon)
  (preprocess (pps ppx_jane ppx_deriving_hardcaml)))

@@ -4,6 +4,8 @@ module Sw = Reedsolomon.Codec.BBCTest
 module Hw = Hardcaml_reedsolomon.Codec.Make (Sw.Gp) (Sw.Rp)
 module Gfb = Hardcaml_reedsolomon.Galois.Make (Bits) (Sw.Gp)
 
+module type Parallelism = Hardcaml_reedsolomon.Parallelism.S
+
 (* rs code params *)
 let k = Sw.Rp.k
 let t = Sw.Rp.t

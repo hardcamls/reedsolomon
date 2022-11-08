@@ -4,6 +4,8 @@ module Sw : module type of Reedsolomon.Codec.BBCTest
 module Hw : module type of Hardcaml_reedsolomon.Codec.Make (Sw.Gp) (Sw.Rp)
 module Gfb : module type of Hardcaml_reedsolomon.Galois.Make (Bits) (Sw.Gp)
 
+module type Parallelism = Hardcaml_reedsolomon.Parallelism.S
+
 val k : int
 val t : int
 val b : int

@@ -3,19 +3,18 @@ open Hardcaml
 open Hardcaml_waveterm
 open Util
 
-module Test (N : Hw.N) = struct
+module Test (N : Parallelism) = struct
   module Decoder = Hw.Decoder (N)
-  module Decode = Decoder.Decode
-  module Sim = Cyclesim.With_interface (Decode.I) (Decode.O)
+  module Sim = Cyclesim.With_interface (Decoder.I) (Decoder.O)
 
   let display_rules =
-    let module I = Display_rules.With_interface (Decode.I) in
-    let module O = Display_rules.With_interface (Decode.O) in
+    let module I = Display_rules.With_interface (Decoder.I) in
+    let module O = Display_rules.With_interface (Decoder.O) in
     List.concat [ I.default (); O.default () ]
   ;;
 
   let test ?waves () =
-    let sim = Sim.create Decode.create in
+    let sim = Sim.create Decoder.create in
     let waves, sim = waveform_opt ?waves sim in
     let i = Cyclesim.inputs sim in
     let o = Cyclesim.outputs ~clock_edge:Before sim in
