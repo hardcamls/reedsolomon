@@ -1,4 +1,4 @@
-module Test (N : Util.Hw.N) : sig
+module Test (N : Util.Parallelism) : sig
   val display_rules : Hardcaml_waveterm.Display_rules.t
   val test : ?waves:bool -> unit -> Hardcaml_waveterm.Waveform.t option
 end

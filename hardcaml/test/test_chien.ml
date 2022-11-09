@@ -3,7 +3,7 @@ open Hardcaml
 open Hardcaml_waveterm
 open Util
 
-module Test (N : Hw.N) = struct
+module Test (N : Parallelism) = struct
   module Decoder = Hw.Decoder (N)
   module Chien = Decoder.Chien
   module Sim = Cyclesim.With_interface (Chien.I) (Chien.O)

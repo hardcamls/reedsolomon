@@ -1,3 +1,4 @@
+open Base
 open Hardcaml
 
 module Make (B : Comb.S) (P : Reedsolomon.Galois.Table.Params) : sig
