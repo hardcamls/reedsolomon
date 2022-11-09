@@ -1,10 +1,10 @@
 module type Standard = Standards_intf.Standard
 
-module Make (Gp : Galois.Table_params) (Rp : Codec.RsParams) = struct
+module Make (Gp : Galois.Table_params) (Rp : Poly_codec.Params) = struct
   module Gp = Gp
   module G = Galois.Int_table_of_params (Gp)
   module Rp = Rp
-  module R = Codec.MakePoly (G) (Rp)
+  module R = Poly_codec.Make (G) (Rp)
 end
 
 module BBCTest =

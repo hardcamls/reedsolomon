@@ -2,7 +2,7 @@ open Base
 
 module type Standard = Standards_intf.Standard
 
-module Make (Gp : Galois.Table_params) (Rp : Codec.RsParams) : Standard
+module Make (Gp : Galois.Table_params) (Rp : Poly_codec.Params) : Standard
 
 (** Test code used in BBC white paper *)
 module BBCTest : Standard

@@ -1,7 +1,7 @@
-module type RsParams = Codec_intf.RsParams
-module type RsPoly = Codec_intf.RsPoly
+module type Params = Poly_codec_intf.Params
+module type S = Poly_codec_intf.S
 
-module MakePoly (G : Galois.Table_ops) (P : RsParams) = struct
+module Make (G : Galois.Table_ops) (P : Params) = struct
   type elt = G.t
 
   module M = Matrix.Make (G)

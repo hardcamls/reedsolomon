@@ -4,7 +4,7 @@ open Signal
 
 module Make
   (Gp : Reedsolomon.Galois.Table_params)
-  (Rp : Reedsolomon.Codec.RsParams)
+  (Rp : Reedsolomon.Poly_codec.Params)
   (N : Parallelism.S) =
 struct
   module Gfh = Galois.Make (Signal) (Gp)

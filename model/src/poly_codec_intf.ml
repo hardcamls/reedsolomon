@@ -1,10 +1,10 @@
-module type RsParams = sig
+module type Params = sig
   val k : int
   val t : int
   val b : int
 end
 
-module type RsPoly = sig
+module type S = sig
   type elt
 
   module M : Matrix.S with type elt = elt
