@@ -1,3 +1,5 @@
+open Base
+
 module type S = Poly_intf.S
 
 (** Basic polynomial representations.  Coefficients are members of

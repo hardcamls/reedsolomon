@@ -1,3 +1,5 @@
+open Base
+
 module type Standard = Standards_intf.Standard
 
 module Make (Gp : Galois.Table_params) (Rp : Poly_codec.Params) = struct
@@ -563,8 +565,8 @@ module CCSDS = struct
         let b = 128 - t
       end)
 
-  let dop = Array.map (Array.get dual_of_poly)
-  let pod = Array.map (Array.get poly_of_dual)
+  let dop = Array.map ~f:(Array.get dual_of_poly)
+  let pod = Array.map ~f:(Array.get poly_of_dual)
   let ( >> ) f g x = g (f x)
 
   module Map (S : Standard) = struct

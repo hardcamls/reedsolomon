@@ -1,3 +1,5 @@
+open Base
+
 (** basic polynomials of 1 variable *)
 module type S = sig
   (** polynomial coefficient type *)
