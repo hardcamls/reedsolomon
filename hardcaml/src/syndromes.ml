@@ -3,13 +3,13 @@ open Hardcaml
 open Signal
 
 module Make
-  (Gp : Reedsolomon.Galois.Table.Params)
-  (Rp : Reedsolomon.Codec.RsParams)
+  (Gp : Reedsolomon.Galois.Table_params)
+  (Rp : Reedsolomon.Poly_codec.Params)
   (N : Parallelism.S) =
 struct
   module Gfh = Galois.Make (Signal) (Gp)
   module Gfs = Gfh.G
-  module Rs = Reedsolomon.Codec.MakePoly (Gfs) (Rp)
+  module Rs = Reedsolomon.Poly_codec.Make (Gfs) (Rp)
 
   module I = struct
     type 'a t =

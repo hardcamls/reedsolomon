@@ -1,7 +1,8 @@
 open! Base
 open Hardcaml
 
-module M (Gp : Reedsolomon.Galois.Table.Params) (Rp : Reedsolomon.Codec.RsParams) = struct
+module M (Gp : Reedsolomon.Galois.Table_params) (Rp : Reedsolomon.Poly_codec.Params) =
+struct
   module type S = sig
     module I : sig
       type 'a t =

@@ -1,8 +1,8 @@
 open Base
 open Hardcaml
 
-module Make (B : Comb.S) (P : Reedsolomon.Galois.Table.Params) : sig
-  module G : Reedsolomon.Galois.Table.Ops with type t = int
+module Make (B : Comb.S) (P : Reedsolomon.Galois.Table_params) : sig
+  module G : Reedsolomon.Galois.Table_ops with type t = int
 
   type t
 

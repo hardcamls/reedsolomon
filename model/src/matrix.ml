@@ -1,62 +1,11 @@
 (* some simple matrix routines for addition, multiplication etc *)
+open Base
 
-module type S = sig
-  type t [@@deriving sexp_of]
-  type matrix = t array array [@@deriving sexp_of]
+module type S = Matrix_intf.S
 
-  (* size of matrix *)
-  val rows : matrix -> int
-  val cols : matrix -> int
-
-  (*val print : ?c:out_channel -> (t -> string) -> int -> matrix -> unit*)
-
-  (* construction of various matrices *)
-  val init : int -> int -> (int -> int -> t) -> matrix
-  val create : int -> int -> matrix
-  val copy : matrix -> matrix
-  val identity : int -> matrix
-  val transpose : matrix -> matrix
-  val map : (t -> t) -> matrix -> matrix
-  val map2 : (t -> t -> t) -> matrix -> matrix -> matrix
-  val row_vector : t array -> matrix
-  val col_vector : t array -> matrix
-
-  (* concatenate matrices *)
-  val ( >> ) : matrix -> matrix -> matrix
-  val ( ^^ ) : matrix -> matrix -> matrix
-
-  (* select a sub matrix *)
-  val sub : int -> int -> int -> int -> matrix -> matrix
-
-  (* arithmetic *)
-  val ( +: ) : matrix -> matrix -> matrix
-  val ( -: ) : matrix -> matrix -> matrix
-  val ( *: ) : matrix -> matrix -> matrix
-  val ( *:. ) : matrix -> t -> matrix
-
-  (* functions related to inverses *)
-  val minor : int -> int -> matrix -> matrix
-  val det : matrix -> t
-  val adjoint_inverse : matrix -> t * matrix
-
-  (* these functions require element division *)
-  val gauss_jordan : matrix -> matrix
-  val gauss_jordan_inverse : matrix -> matrix
-
-  module Row : sig
-    val swap : int -> int -> int -> matrix
-    val mult : int -> int -> t -> matrix
-    val madd : int -> int -> int -> t -> matrix
-  end
-end
-
-module Make (Ops : Ops.OpsBase) = struct
-  include struct
-    open Base
-
-    type t = Ops.t [@@deriving sexp_of]
-    type matrix = t array array [@@deriving sexp_of]
-  end
+module Make (Ops : Ops.S) = struct
+  type elt = Ops.t [@@deriving sexp_of]
+  type t = elt array array [@@deriving sexp_of]
 
   let rows m = Array.length m
   let cols m = Array.length m.(0)
@@ -70,7 +19,7 @@ module Make (Ops : Ops.OpsBase) = struct
           fprintf c "\n"
       done*)
 
-  let init rows cols f = Array.init rows (fun r -> Array.init cols (fun c -> f r c))
+  let init rows cols f = Array.init rows ~f:(fun r -> Array.init cols ~f:(fun c -> f r c))
   let create rows cols = init rows cols (fun _ _ -> Ops.zero)
   let copy m = init (rows m) (cols m) (fun r c -> m.(r).(c))
   let identity n = init n n (fun r c -> if r = c then Ops.one else Ops.zero)
@@ -148,7 +97,7 @@ module Make (Ops : Ops.OpsBase) = struct
         then Ops.zero
         else (
           let m' = minor 0 i m in
-          let op = if i mod 2 = 0 then Ops.( -: ) else Ops.( +: ) in
+          let op = if i land 1 = 0 then Ops.( -: ) else Ops.( +: ) in
           Ops.(op (m.(0).(i) *: det m') (f (i + 1))))
       in
       f 0)
@@ -156,12 +105,12 @@ module Make (Ops : Ops.OpsBase) = struct
 
   let adjoint_inverse m =
     let d = det m in
-    if d = Ops.zero
+    if Ops.compare d Ops.zero = 0
     then failwith "cannot invert"
     else (
       let m =
         init (rows m) (cols m) (fun r c ->
-          let inv = (r + c) mod 2 = 1 in
+          let inv = (r + c) land 1 = 1 in
           let d = det (minor r c m) in
           if inv then Ops.(zero -: d) else d)
       in
@@ -189,7 +138,7 @@ module Make (Ops : Ops.OpsBase) = struct
     let pivot r =
       let max = ref r in
       for i = r + 1 to rows m - 1 do
-        if m.(i).(r) > m.(!max).(r) then max := i
+        if Ops.compare m.(i).(r) m.(!max).(r) = 1 then max := i
       done;
       let a, b = m.(r), m.(!max) in
       m.(r) <- b;

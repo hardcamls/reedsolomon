@@ -1,6 +1,6 @@
 open Core
 open Hardcaml
-module Sw = Reedsolomon.Codec.BBCTest
+module Sw = Reedsolomon.Standards.BBCTest
 module Hw = Hardcaml_reedsolomon.Codec.Make (Sw.Gp) (Sw.Rp)
 module Gfb = Hardcaml_reedsolomon.Galois.Make (Bits) (Sw.Gp)
 

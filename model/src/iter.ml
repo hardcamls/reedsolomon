@@ -37,7 +37,7 @@ let init p =
     let b = p.b
   end
   in
-  let module R = Codec.MakeStandard (Gp) (Rp) in
+  let module R = Standards.Make (Gp) (Rp) in
   let module G = R.G in
   (* array utilities *)
   let len = Array.length in

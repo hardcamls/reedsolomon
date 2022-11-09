@@ -1,15 +1,13 @@
-(** Configuration of a Reed-Solomon code *)
-module type RsParams = sig
+module type Params = sig
   val k : int
   val t : int
   val b : int
 end
 
-(** RS encoding and decoding *)
-module type RsPoly = sig
+module type S = sig
   type elt
 
-  module M : Matrix.S with type t = elt
+  module M : Matrix.S with type elt = elt
   module R : Poly.S with type t = elt array and type elt = elt
 
   type poly = R.t [@@deriving sexp_of]
@@ -23,18 +21,14 @@ module type RsPoly = sig
   val encode : poly -> poly
   val horner : poly -> elt -> elt
   val syndromes : poly -> poly
-  val key_equations : poly -> int -> M.matrix * M.matrix
-  val solve_key_equations : M.matrix * M.matrix -> M.matrix
+  val key_equations : poly -> int -> M.t * M.t
+  val solve_key_equations : M.t * M.t -> M.t
   val peterson : poly -> poly
   val euclid_inner : poly * poly -> poly * poly -> poly * poly
   val euclid : ?norm:bool -> ?lim:int -> poly -> poly * poly
   val berlekamp_massey_iter : poly -> int -> poly * poly * int -> poly * poly * int
   val berlekamp_massey : poly -> poly
 
-  (** inversionless berlekamp massey algorithms.
-
-      Based on the paper "High-speed architectures for
-      Reed-Solomon decoders" Dilip V Sarwate, Naresh R Shanbhag *)
   module Sarwate : sig
     val iBM : poly -> poly
     val riBM : poly -> poly * poly
@@ -60,45 +54,6 @@ module type RsPoly = sig
   val decode_erasures : poly -> int list -> poly
   val decode_errors_and_erasures_euclid : poly -> int list -> poly
 
-  (* erasure decoding not working with berlekamp massey *)
   (*val decode_errors_and_erasures_berlekamp_massey : poly -> int list -> poly*)
   val decode_errors_and_erasures : poly -> int list -> poly
 end
-
-(** Create a Reed-Solomon code based on the given Galois field and code parameters *)
-module MakePoly (G : Galois.Table.Ops) (P : RsParams) : RsPoly with type elt = G.t
-
-(* some example RS CODECs in use *)
-
-module type Standard = sig
-  module Gp : Galois.Table.Params
-  module G : Galois.Table.Ops with type t = int
-  module Rp : RsParams
-  module R : RsPoly with type elt = int
-end
-
-module MakeStandard (Gp : Galois.Table.Params) (Rp : RsParams) : Standard
-
-(** Test code used in BBC white paper *)
-module BBCTest : Standard
-
-(** Consultative Committee for Space Data Systems *)
-module CCSDS : sig
-  val dual_of_poly : int array
-  val poly_of_dual : int array
-
-  (** t=16 *)
-  module Rs16 : Standard
-
-  (** t=8 *)
-  module Rs8 : Standard
-end
-
-(** Digital Video Broadcasting *)
-module DVB : Standard
-
-(** Advanced Television Systems Committee *)
-module ATSC : Standard
-
-(** Interfaces for the Optical Transport Network *)
-module G709 : Standard

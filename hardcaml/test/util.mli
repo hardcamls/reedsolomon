@@ -1,6 +1,6 @@
 open Core
 open Hardcaml
-module Sw : module type of Reedsolomon.Codec.BBCTest
+module Sw : Reedsolomon.Standards.Standard
 module Hw : module type of Hardcaml_reedsolomon.Codec.Make (Sw.Gp) (Sw.Rp)
 module Gfb : module type of Hardcaml_reedsolomon.Galois.Make (Bits) (Sw.Gp)
 

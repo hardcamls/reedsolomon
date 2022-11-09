@@ -1,42 +1,10 @@
 open Base
 
-module type OpsBase = sig
-  type t [@@deriving sexp_of]
-
-  val zero : t
-  val one : t
-  val ( +: ) : t -> t -> t
-  val ( -: ) : t -> t -> t
-  val ( *: ) : t -> t -> t
-  val ( /: ) : t -> t -> t
-  val to_string : t -> string
-end
-
-module type OpsFull = sig
-  include OpsBase
-
-  val ( %: ) : t -> t -> t
-  val abs : t -> t
-  val ( <<: ) : t -> int -> t
-  val ( >>+ ) : t -> int -> t
-  val ( >>: ) : t -> int -> t
-  val ( &: ) : t -> t -> t
-  val ( |: ) : t -> t -> t
-  val ( ^: ) : t -> t -> t
-  val ( ~: ) : t -> t
-  val of_int : int -> t
-  val to_int : t -> int
-  val of_int32 : int32 -> t
-  val to_int32 : t -> int32
-  val of_int64 : int64 -> t
-  val to_int64 : t -> int64
-  val of_float : float -> t
-  val to_float : t -> float
-  val of_string : string -> t
-end
+module type S = Ops_intf.S
+module type Extended = Ops_intf.Extended
 
 module Int = struct
-  type t = int [@@deriving sexp_of]
+  type t = int [@@deriving sexp_of, compare]
 
   let zero = 0
   let one = 1
@@ -66,7 +34,7 @@ module Int = struct
 end
 
 module Int32 = struct
-  type t = int32 [@@deriving sexp_of]
+  type t = int32 [@@deriving sexp_of, compare]
 
   open Int32
 
@@ -98,7 +66,7 @@ module Int32 = struct
 end
 
 module Int64 = struct
-  type t = int64 [@@deriving sexp_of]
+  type t = int64 [@@deriving sexp_of, compare]
 
   open Int64
 
@@ -130,7 +98,7 @@ module Int64 = struct
 end
 
 module Float = struct
-  type t = float [@@deriving sexp_of]
+  type t = float [@@deriving sexp_of, compare]
 
   let zero = 0.0
   let one = 1.0
