@@ -66,18 +66,18 @@ module type RsPoly = sig
 end
 
 (** Create a Reed-Solomon code based on the given Galois field and code parameters *)
-module MakePoly (G : Galois.Table.Ops) (P : RsParams) : RsPoly with type elt = G.t
+module MakePoly (G : Galois.Table_ops) (P : RsParams) : RsPoly with type elt = G.t
 
 (* some example RS CODECs in use *)
 
 module type Standard = sig
-  module Gp : Galois.Table.Params
-  module G : Galois.Table.Ops with type t = int
+  module Gp : Galois.Table_params
+  module G : Galois.Table_ops with type t = int
   module Rp : RsParams
   module R : RsPoly with type elt = int
 end
 
-module MakeStandard (Gp : Galois.Table.Params) (Rp : RsParams) : Standard
+module MakeStandard (Gp : Galois.Table_params) (Rp : RsParams) : Standard
 
 (** Test code used in BBC white paper *)
 module BBCTest : Standard

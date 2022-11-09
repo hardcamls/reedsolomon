@@ -2,7 +2,7 @@
 open! Base
 open Hardcaml
 
-module Make (Gp : Reedsolomon.Galois.Table.Params) (Rp : Reedsolomon.Codec.RsParams) =
+module Make (Gp : Reedsolomon.Galois.Table_params) (Rp : Reedsolomon.Codec.RsParams) =
 struct
   module Gfh = Galois.Make (Signal) (Gp)
   module Encoder = Encoder.Make (Gp) (Rp)

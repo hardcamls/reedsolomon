@@ -2,8 +2,8 @@
 open Base
 open Hardcaml
 
-module Make (B : Comb.S) (P : Reedsolomon.Galois.Table.Params) = struct
-  module G = Reedsolomon.Galois.Table.MakeInt (P)
+module Make (B : Comb.S) (P : Reedsolomon.Galois.Table_params) = struct
+  module G = Reedsolomon.Galois.Int_table_of_params (P)
 
   type t = B.t
 

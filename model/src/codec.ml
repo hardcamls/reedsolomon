@@ -58,7 +58,7 @@ module type RsPoly = sig
   val decode_errors_and_erasures : poly -> int list -> poly
 end
 
-module MakePoly (G : Galois.Table.Ops) (P : RsParams) = struct
+module MakePoly (G : Galois.Table_ops) (P : RsParams) = struct
   type elt = G.t
 
   module M = Matrix.Make (G)
@@ -521,15 +521,15 @@ module MakePoly (G : Galois.Table.Ops) (P : RsParams) = struct
 end
 
 module type Standard = sig
-  module Gp : Galois.Table.Params
-  module G : Galois.Table.Ops with type t = int
+  module Gp : Galois.Table_params
+  module G : Galois.Table_ops with type t = int
   module Rp : RsParams
   module R : RsPoly with type elt = int
 end
 
-module MakeStandard (Gp : Galois.Table.Params) (Rp : RsParams) = struct
+module MakeStandard (Gp : Galois.Table_params) (Rp : RsParams) = struct
   module Gp = Gp
-  module G = Galois.Table.MakeInt (Gp)
+  module G = Galois.Int_table_of_params (Gp)
   module Rp = Rp
   module R = MakePoly (G) (Rp)
 end

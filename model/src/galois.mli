@@ -1,91 +1,36 @@
+module type Primitive_field_prime = Galois_intf.Primitive_field_prime
+
 (* primitive fields of type GF(n) where n is prime *)
-module Primitive : sig
-  module type GF_n = sig
-    val n : int
-  end
+module Primitive_field (Prime : Primitive_field_prime) : Ops.S with type t = int
 
-  (* GF(n) primitive finite field *)
-  module GFN (GF_n : GF_n) : Ops.S with type t = int
+(* Primitive field of order 2 GF(2) *)
+module GF2 : Ops.S with type t = int
 
-  (* GF(2) *)
-  module GF2 : Ops.S with type t = int
-end
+module type Extension_field_generator = Galois_intf.Extension_field_generator
 
 (* GF(n^m) extension fields built from primitive fields and polynomials *)
-module Extension : sig
-  module type Generator = sig
-    (** polynomial with primitive field coefficients *)
-    module Poly : Poly.S
+module Extension_field (G : Extension_field_generator) : Ops.S with type t = G.Poly.t
 
-    (** primitive polynomial *)
-    val pp : Poly.t
-  end
-
-  (** make extension field *)
-  module Make (G : Generator) : Ops.S with type t = G.Poly.t
-end
+module type GF2_extension_field_generator = Galois_intf.GF2_extension_field_generator
 
 (** convenience module for building GF(2^n) fields *)
-module GF2N : sig
-  module Make (P : sig
-    val pp : int array
-  end) : Ops.S with type t = int array
+module GF2N (G : GF2_extension_field_generator) : Ops.S with type t = int array
 
-  (** list of primitive polys for GF(2); 3..24 **)
-  val gf2_prim_polys : int array array
-end
+(** list of primitive polys for GF(2); 3..24 *)
+val gf2_prim_polys : int array array
 
-module Table : sig
-  module type Generator = sig
-    module Ops : Ops.S
+module type Table_generator = Galois_intf.Table_generator
+module type Table_ops = Galois_intf.Table_ops
+module type Table_params = Galois_intf.Table_params
 
-    val alpha : Ops.t
-    (* primitive element *)
-  end
+(** builds log/antilog table representation over any field representation *)
+module Table (G : Table_generator) : Table_ops with type t = G.Ops.t
 
-  module type Ops = sig
-    include Ops.S
+(** specialised representation using integers *)
+module To_int_table_field (Ops : Table_ops with type t = int array) :
+  Table_ops with type t = int
 
-    (** primitive element *)
-    val alpha : t
+module Generator_of_table_params (P : Table_params) :
+  Table_generator with type Ops.t = int array
 
-    (** number of elements in field *)
-    val n_elems : int
-
-    (** log x = b when alpha^b = x *)
-    val log : t -> int
-
-    (** inverse log *)
-    val antilog : int -> t
-
-    (** multiplication *)
-    val ( *: ) : t -> t -> t
-
-    (** division *)
-    val ( /: ) : t -> t -> t
-
-    (** power *)
-    val ( **: ) : t -> int -> t
-
-    (** inverse *)
-    val inv : t -> t
-  end
-
-  (** builds log/antilog table representation over any field representation *)
-  module Make (G : Generator) : Ops with type t = G.Ops.t
-
-  (** specialised representation using integers *)
-  module Int (Ops : Ops with type t = int array) : Ops with type t = int
-
-  (** simplified field specification using integers *)
-  module type Params = sig
-    (** primitive polynomial (including leading power) *)
-    val pp : int
-
-    (** primitive element *)
-    val pe : int
-  end
-
-  module Params (P : Params) : Generator with type Ops.t = int array
-  module MakeInt (P : Params) : Ops with type t = int
-end
+module Int_table_of_params (P : Table_params) : Table_ops with type t = int

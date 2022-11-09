@@ -2,7 +2,7 @@ open Base
 open Hardcaml
 
 module M
-  (Gp : Reedsolomon.Galois.Table.Params)
+  (Gp : Reedsolomon.Galois.Table_params)
   (Rp : Reedsolomon.Codec.RsParams)
   (N : Parallelism.S) =
 struct

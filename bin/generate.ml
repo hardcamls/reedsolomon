@@ -6,10 +6,8 @@ module Codec_args = struct
     if idx < 2
     then raise_s [%message "number of bits must be > 1"]
     else
-      Array.foldi
-        Reedsolomon.Galois.GF2N.gf2_prim_polys.(idx)
-        ~init:0
-        ~f:(fun idx acc b -> acc + if b = 0 then 0 else b lsl idx)
+      Array.foldi Reedsolomon.Galois.gf2_prim_polys.(idx) ~init:0 ~f:(fun idx acc b ->
+        acc + if b = 0 then 0 else b lsl idx)
   ;;
 
   let args =
