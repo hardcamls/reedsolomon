@@ -5,10 +5,10 @@ module Primitive : sig
   end
 
   (* GF(n) primitive finite field *)
-  module GFN (GF_n : GF_n) : Ops.OpsBase with type t = int
+  module GFN (GF_n : GF_n) : Ops.S with type t = int
 
   (* GF(2) *)
-  module GF2 : Ops.OpsBase with type t = int
+  module GF2 : Ops.S with type t = int
 end
 
 (* GF(n^m) extension fields built from primitive fields and polynomials *)
@@ -22,14 +22,14 @@ module Extension : sig
   end
 
   (** make extension field *)
-  module Make (G : Generator) : Ops.OpsBase with type t = G.Poly.t
+  module Make (G : Generator) : Ops.S with type t = G.Poly.t
 end
 
 (** convenience module for building GF(2^n) fields *)
 module GF2N : sig
   module Make (P : sig
     val pp : int array
-  end) : Ops.OpsBase with type t = int array
+  end) : Ops.S with type t = int array
 
   (** list of primitive polys for GF(2); 3..24 **)
   val gf2_prim_polys : int array array
@@ -37,14 +37,14 @@ end
 
 module Table : sig
   module type Generator = sig
-    module Ops : Ops.OpsBase
+    module Ops : Ops.S
 
     val alpha : Ops.t
     (* primitive element *)
   end
 
   module type Ops = sig
-    include Ops.OpsBase
+    include Ops.S
 
     (** primitive element *)
     val alpha : t

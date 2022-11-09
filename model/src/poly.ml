@@ -1,40 +1,8 @@
 (* polynomial api.  powers are at array index positions *)
 
-module type S = sig
-  type elt [@@deriving sexp_of]
-  type t [@@deriving sexp_of]
+module type S = Poly_intf.S
 
-  val degree : t -> int
-  val zero : t
-  val one : t
-  val x : t
-  val to_poly : elt array -> t
-  val of_poly : t -> elt array
-  val copy : t -> t
-
-  type poly_format =
-    { coef : elt -> string
-    ; indet : int -> string
-    }
-
-  val poly_format : poly_format
-  val string_format : bool -> poly_format -> int -> elt -> string
-  val to_string : ?down:bool -> ?str:(int -> elt -> string) -> t -> string
-  val trim : t -> t
-  val slice : t -> int -> t
-  val ( +: ) : t -> t -> t
-  val ( -: ) : t -> t -> t
-  val ( *: ) : t -> t -> t
-  val ( /: ) : t -> t -> t * t
-  val ( *:. ) : t -> elt -> t
-  val ( /:. ) : t -> elt -> t
-  val ( ^: ) : t -> int -> t
-  val ( **: ) : t -> int -> t
-  val ext_gcd : t -> t -> t * t
-  val eval : t -> elt -> elt
-end
-
-module Make (E : Ops.OpsBase) = struct
+module Make (E : Ops.S) = struct
   type elt = E.t [@@deriving sexp_of]
   type t = elt Base.array [@@deriving sexp_of]
 

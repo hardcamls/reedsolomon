@@ -138,14 +138,14 @@ end
 
 module Table = struct
   module type Generator = sig
-    module Ops : Ops.OpsBase
+    module Ops : Ops.S
 
     (* primitive element *)
     val alpha : Ops.t
   end
 
   module type Ops = sig
-    include Ops.OpsBase
+    include Ops.S
 
     val alpha : t
     val n_elems : int
