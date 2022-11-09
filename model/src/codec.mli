@@ -67,38 +67,3 @@ end
 
 (** Create a Reed-Solomon code based on the given Galois field and code parameters *)
 module MakePoly (G : Galois.Table_ops) (P : RsParams) : RsPoly with type elt = G.t
-
-(* some example RS CODECs in use *)
-
-module type Standard = sig
-  module Gp : Galois.Table_params
-  module G : Galois.Table_ops with type t = int
-  module Rp : RsParams
-  module R : RsPoly with type elt = int
-end
-
-module MakeStandard (Gp : Galois.Table_params) (Rp : RsParams) : Standard
-
-(** Test code used in BBC white paper *)
-module BBCTest : Standard
-
-(** Consultative Committee for Space Data Systems *)
-module CCSDS : sig
-  val dual_of_poly : int array
-  val poly_of_dual : int array
-
-  (** t=16 *)
-  module Rs16 : Standard
-
-  (** t=8 *)
-  module Rs8 : Standard
-end
-
-(** Digital Video Broadcasting *)
-module DVB : Standard
-
-(** Advanced Television Systems Committee *)
-module ATSC : Standard
-
-(** Interfaces for the Optical Transport Network *)
-module G709 : Standard
