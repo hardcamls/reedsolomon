@@ -4,7 +4,7 @@ module type S = Ops_intf.S
 module type Extended = Ops_intf.Extended
 
 module Int = struct
-  type t = int [@@deriving sexp_of]
+  type t = int [@@deriving sexp_of, compare]
 
   let zero = 0
   let one = 1
@@ -34,7 +34,7 @@ module Int = struct
 end
 
 module Int32 = struct
-  type t = int32 [@@deriving sexp_of]
+  type t = int32 [@@deriving sexp_of, compare]
 
   open Int32
 
@@ -66,7 +66,7 @@ module Int32 = struct
 end
 
 module Int64 = struct
-  type t = int64 [@@deriving sexp_of]
+  type t = int64 [@@deriving sexp_of, compare]
 
   open Int64
 
@@ -98,7 +98,7 @@ module Int64 = struct
 end
 
 module Float = struct
-  type t = float [@@deriving sexp_of]
+  type t = float [@@deriving sexp_of, compare]
 
   let zero = 0.0
   let one = 1.0

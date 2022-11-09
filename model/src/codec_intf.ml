@@ -7,7 +7,7 @@ end
 module type RsPoly = sig
   type elt
 
-  module M : Matrix.S with type t = elt
+  module M : Matrix.S with type elt = elt
   module R : Poly.S with type t = elt array and type elt = elt
 
   type poly = R.t [@@deriving sexp_of]
@@ -21,8 +21,8 @@ module type RsPoly = sig
   val encode : poly -> poly
   val horner : poly -> elt -> elt
   val syndromes : poly -> poly
-  val key_equations : poly -> int -> M.matrix * M.matrix
-  val solve_key_equations : M.matrix * M.matrix -> M.matrix
+  val key_equations : poly -> int -> M.t * M.t
+  val solve_key_equations : M.t * M.t -> M.t
   val peterson : poly -> poly
   val euclid_inner : poly * poly -> poly * poly -> poly * poly
   val euclid : ?norm:bool -> ?lim:int -> poly -> poly * poly

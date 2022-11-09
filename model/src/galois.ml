@@ -6,7 +6,7 @@ module Primitive_field (Prime : Primitive_field_prime) = struct
 
   (* Note: [n] must be prime.  We should add a test. *)
 
-  type t = Base.int [@@deriving sexp_of]
+  type t = Base.int [@@deriving sexp_of, compare]
 
   let zero = 0
   let one = 1
@@ -35,7 +35,7 @@ end
 
 (* GF(2) *)
 module GF2 = struct
-  type t = Base.int [@@deriving sexp_of]
+  type t = Base.int [@@deriving sexp_of, compare]
 
   let zero = 0
   let one = 1
@@ -56,7 +56,7 @@ module type Extension_field_generator = Galois_intf.Extension_field_generator
 
 (* GF extension fields built from primitive fields and polynomials *)
 module Extension_field (G : Extension_field_generator) = struct
-  type t = G.Poly.t [@@deriving sexp_of]
+  type t = G.Poly.t [@@deriving sexp_of, compare]
 
   let zero = G.Poly.zero
   let one = G.Poly.one
@@ -132,13 +132,13 @@ module Table (G : Table_generator) = struct
   module PM = Map.Make (struct
     type t = G.Ops.t
 
-    let compare = compare
+    let compare = G.Ops.compare
   end)
 
   module IM = Map.Make (struct
     type t = int
 
-    let compare = compare
+    let compare = Int.compare
   end)
 
   let alpha = G.alpha
@@ -201,7 +201,7 @@ module Table (G : Table_generator) = struct
 end
 
 module To_int_table_field (Ops : Table_ops with type t = int array) = struct
-  type t = Base.int [@@deriving sexp_of]
+  type t = Base.int [@@deriving sexp_of, compare]
 
   let zero = 0
   let one = 1

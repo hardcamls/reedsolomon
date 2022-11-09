@@ -1,11 +1,11 @@
 (** basic polynomials of 1 variable *)
 module type S = sig
   (** polynomial coefficient type *)
-  type elt [@@deriving sexp_of]
+  type elt [@@deriving sexp_of, compare]
 
   (** an array of [elt]s representing the polynomial. Powers are at index
       position (ie lowest first) *)
-  type t [@@deriving sexp_of]
+  type t [@@deriving sexp_of, compare]
 
   (** the degree of the polynomial *)
   val degree : t -> int

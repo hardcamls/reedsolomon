@@ -1,5 +1,5 @@
 module type S = sig
-  type t [@@deriving sexp_of]
+  type t [@@deriving sexp_of, compare]
 
   val zero : t
   val one : t

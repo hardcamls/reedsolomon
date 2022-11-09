@@ -3,8 +3,8 @@
 module type S = Poly_intf.S
 
 module Make (E : Ops.S) = struct
-  type elt = E.t [@@deriving sexp_of]
-  type t = elt Base.array [@@deriving sexp_of]
+  type elt = E.t [@@deriving sexp_of, compare]
+  type t = elt Base.array [@@deriving sexp_of, compare]
 
   let string_of_elt = E.to_string
   let degree p = Array.length p - 1

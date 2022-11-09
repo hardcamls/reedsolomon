@@ -1,48 +1,50 @@
+open Base
+
 module type S = sig
-  type t [@@deriving sexp_of]
-  type matrix = t array array [@@deriving sexp_of]
+  type elt [@@deriving sexp_of]
+  type t = elt array array [@@deriving sexp_of]
 
   (* size of matrix *)
-  val rows : matrix -> int
-  val cols : matrix -> int
+  val rows : t -> int
+  val cols : t -> int
 
   (* construction of various matrices *)
-  val init : int -> int -> (int -> int -> t) -> matrix
-  val create : int -> int -> matrix
-  val copy : matrix -> matrix
-  val identity : int -> matrix
-  val transpose : matrix -> matrix
-  val map : (t -> t) -> matrix -> matrix
-  val map2 : (t -> t -> t) -> matrix -> matrix -> matrix
-  val row_vector : t array -> matrix
-  val col_vector : t array -> matrix
+  val init : int -> int -> (int -> int -> elt) -> t
+  val create : int -> int -> t
+  val copy : t -> t
+  val identity : int -> t
+  val transpose : t -> t
+  val map : (elt -> elt) -> t -> t
+  val map2 : (elt -> elt -> elt) -> t -> t -> t
+  val row_vector : elt array -> t
+  val col_vector : elt array -> t
 
   (* concatenate matrices *)
-  val ( >> ) : matrix -> matrix -> matrix
-  val ( ^^ ) : matrix -> matrix -> matrix
+  val ( >> ) : t -> t -> t
+  val ( ^^ ) : t -> t -> t
 
   (* select a sub matrix *)
-  val sub : int -> int -> int -> int -> matrix -> matrix
+  val sub : int -> int -> int -> int -> t -> t
 
   (* arithmetic *)
-  val ( +: ) : matrix -> matrix -> matrix
-  val ( -: ) : matrix -> matrix -> matrix
-  val ( *: ) : matrix -> matrix -> matrix
-  val ( *:. ) : matrix -> t -> matrix
+  val ( +: ) : t -> t -> t
+  val ( -: ) : t -> t -> t
+  val ( *: ) : t -> t -> t
+  val ( *:. ) : t -> elt -> t
 
   (* functions related to inverses *)
-  val minor : int -> int -> matrix -> matrix
-  val det : matrix -> t
-  val adjoint_inverse : matrix -> t * matrix
+  val minor : int -> int -> t -> t
+  val det : t -> elt
+  val adjoint_inverse : t -> elt * t
 
   (* these functions require element division *)
-  val gauss_jordan : matrix -> matrix
-  val gauss_jordan_inverse : matrix -> matrix
+  val gauss_jordan : t -> t
+  val gauss_jordan_inverse : t -> t
 
   (* elementary row operations *)
   module Row : sig
-    val swap : int -> int -> int -> matrix
-    val mult : int -> int -> t -> matrix
-    val madd : int -> int -> int -> t -> matrix
+    val swap : int -> int -> int -> t
+    val mult : int -> int -> elt -> t
+    val madd : int -> int -> int -> elt -> t
   end
 end
