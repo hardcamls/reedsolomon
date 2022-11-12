@@ -54,6 +54,24 @@ let command_chien =
         Option.iter waves ~f:Hardcaml_waveterm_interactive.run]
 ;;
 
+let command_forney =
+  Command.basic
+    ~summary:"Test forney calculation"
+    [%map_open.Command
+      let seed = flag "-seed" (optional_with_default 1 int) ~doc:"SEED random seed"
+      and waves = flag "-waves" no_arg ~doc:"Show waveform"
+      and parallelism =
+        flag
+          "-parallelism"
+          (optional_with_default 1 int)
+          ~doc:"PARALLELISM Code word parallelism - symbols processed per cycle"
+      in
+      fun () ->
+        Random.init seed;
+        let waves = Test_hardcaml_reedsolomon.Test_forney.test ~waves parallelism in
+        Option.iter waves ~f:Hardcaml_waveterm_interactive.run]
+;;
+
 let command_berlekamp =
   Command.basic
     ~summary:"Test berlekamp calculation"
@@ -95,5 +113,6 @@ let command =
     ; "syndromes", command_syndromes
     ; "chien-search", command_chien
     ; "berlekamp", command_berlekamp
+    ; "forney", command_forney
     ]
 ;;
