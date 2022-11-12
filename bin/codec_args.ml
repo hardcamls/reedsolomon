@@ -35,5 +35,5 @@ let args =
       | None -> default_poly m
       | Some prim_poly -> prim_poly
     in
-    { Reedsolomon.Iter.m; k = n - (2 * t); t; n; b; prim_poly; prim_elt }]
+    { Reedsolomon.Iter_codec.m; k = n - (2 * t); t; n; b; prim_poly; prim_elt }]
 ;;

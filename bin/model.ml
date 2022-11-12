@@ -1,13 +1,13 @@
 (* Reed-solomon test application. *)
 open Core
 
-let random_codes (params : Reedsolomon.Iter.rsparams) n =
+let random_codes (params : Reedsolomon.Iter_codec.params) n =
   Array.init n ~f:(fun _ -> Random.int (1 lsl params.m))
 ;;
 
-let random_message (params : Reedsolomon.Iter.rsparams) = random_codes params params.k
+let random_message (params : Reedsolomon.Iter_codec.params) = random_codes params params.k
 
-let random_errors (params : Reedsolomon.Iter.rsparams) ~num_errors =
+let random_errors (params : Reedsolomon.Iter_codec.params) ~num_errors =
   let errors =
     Array.init params.n ~f:(fun i ->
       if i < num_errors then 1 + Random.int ((1 lsl params.m) - 1) else 0)
@@ -23,7 +23,7 @@ let command_message =
       let params = Codec_args.args
       and verbose = flag "-v" no_arg ~doc:"Display codec parameters" in
       fun () ->
-        if verbose then print_s [%message (params : Reedsolomon.Iter.rsparams)];
+        if verbose then print_s [%message (params : Reedsolomon.Iter_codec.params)];
         Array.iter (random_message params) ~f:(printf "%i\n")]
 ;;
 
@@ -34,8 +34,8 @@ let command_encode =
       let params = Codec_args.args
       and verbose = flag "-v" no_arg ~doc:"Display codec parameters" in
       fun () ->
-        if verbose then print_s [%message (params : Reedsolomon.Iter.rsparams)];
-        let codec = Reedsolomon.Iter.init params in
+        if verbose then print_s [%message (params : Reedsolomon.Iter_codec.params)];
+        let codec = Reedsolomon.Iter_codec.init params in
         let message =
           In_channel.input_lines In_channel.stdin
           |> List.map ~f:Int.of_string
@@ -61,7 +61,7 @@ let command_errors =
           ~doc:"ERRORS add given number of errors to each code word"
       and verbose = flag "-v" no_arg ~doc:"Display codec parameters" in
       fun () ->
-        if verbose then print_s [%message (params : Reedsolomon.Iter.rsparams)];
+        if verbose then print_s [%message (params : Reedsolomon.Iter_codec.params)];
         let num_errors = Option.value ~default:params.t num_errors in
         let rec read_block errors n d =
           if n = params.n
@@ -90,8 +90,8 @@ let command_decode =
       let params = Codec_args.args
       and verbose = flag "-v" no_arg ~doc:"Display codec parameters" in
       fun () ->
-        if verbose then print_s [%message (params : Reedsolomon.Iter.rsparams)];
-        let codec = Reedsolomon.Iter.init params in
+        if verbose then print_s [%message (params : Reedsolomon.Iter_codec.params)];
+        let codec = Reedsolomon.Iter_codec.init params in
         let codeword =
           In_channel.input_lines In_channel.stdin
           |> List.map ~f:Int.of_string
@@ -115,8 +115,8 @@ let command_correctness =
         flag "-num-tests" (optional_with_default 1 int) ~doc:"NUM number of test to run"
       in
       fun () ->
-        if verbose then print_s [%message (params : Reedsolomon.Iter.rsparams)];
-        let codec = Reedsolomon.Iter.init params in
+        if verbose then print_s [%message (params : Reedsolomon.Iter_codec.params)];
+        let codec = Reedsolomon.Iter_codec.init params in
         for i = 0 to num_tests - 1 do
           let message = random_message params in
           let parity = Array.create ~len:(2 * params.t) 0 in

@@ -61,7 +61,7 @@ end
 
 module Encode_file = struct
   let run
-    ({ m; k; t; n; b; prim_poly; prim_elt } : Reedsolomon.Iter.rsparams)
+    ({ m; k; t; n; b; prim_poly; prim_elt } : Reedsolomon.Iter_codec.params)
     in_file
     out_file
     =
@@ -142,7 +142,7 @@ end
 
 module Decode_file = struct
   let run
-    ({ m; k; t; n; b; prim_poly; prim_elt } : Reedsolomon.Iter.rsparams)
+    ({ m; k; t; n; b; prim_poly; prim_elt } : Reedsolomon.Iter_codec.params)
     parallelism
     in_file
     out_file

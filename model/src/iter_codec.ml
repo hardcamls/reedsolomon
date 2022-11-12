@@ -1,7 +1,7 @@
 include struct
   open Base
 
-  type rsparams =
+  type params =
     { m : int (* bits per symbol *)
     ; k : int (* message symbols *)
     ; t : int (* correction capability, 2t=parity symbols *)
@@ -13,15 +13,15 @@ include struct
   [@@deriving sexp_of]
 end
 
-type rspoly = int array
+type poly = int array
 
 let rspoly n = Array.make n 0
 let to_string = Array.fold_left (fun s x -> s ^ " " ^ string_of_int x) ""
 
-type rscodec =
-  { params : rsparams
-  ; encode : rspoly -> rspoly -> unit
-  ; decode : rspoly -> rspoly -> int
+type t =
+  { params : params
+  ; encode : poly -> poly -> unit
+  ; decode : poly -> poly -> int
   }
 
 let init p =
