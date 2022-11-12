@@ -230,3 +230,7 @@ let init p =
   in
   { params = p; encode; decode }
 ;;
+
+let encode t = t.encode
+let decode t = t.decode
+let params t = t.params

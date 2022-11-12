@@ -131,7 +131,7 @@ module Encode_file = struct
 
   let command =
     Command.basic
-      ~summary:""
+      ~summary:"Encode a the given file"
       [%map_open.Command
         let args = Codec_args.args
         and in_file = anon ("IN_FILE" %: string)
@@ -270,7 +270,7 @@ module Decode_file = struct
 
   let command =
     Command.basic
-      ~summary:""
+      ~summary:"Decode the given file"
       [%map_open.Command
         let args = Codec_args.args
         and parallelism =
@@ -286,6 +286,6 @@ end
 
 let command =
   Command.group
-    ~summary:""
+    ~summary:"Encode and decode from files using hardware simulation"
     [ "encode", Encode_file.command; "decode", Decode_file.command ]
 ;;

@@ -13,10 +13,9 @@ type poly = int array
 
 val rspoly : int -> poly
 
-type t =
-  { params : params
-  ; encode : poly -> poly -> unit
-  ; decode : poly -> poly -> int
-  }
+type t
 
 val init : params -> t
+val params : t -> params
+val encode : t -> poly -> poly -> unit
+val decode : t -> poly -> poly -> int
