@@ -54,7 +54,9 @@ let command_decoder =
         let module Hw = Hardcaml_reedsolomon.Codec.Make (Gp) (Rp) in
         let module Decoder = Hw.Decoder (N) in
         let module Circuit = Hardcaml.Circuit.With_interface (Decoder.I) (Decoder.O) in
-        Rtl.print Verilog (Circuit.create_exn ~name:"encoder" Decoder.create)]
+        let scope = Scope.create ~flatten_design:false () in
+        let circuit = Circuit.create_exn ~name:"rsdecoder" (Decoder.create scope) in
+        Rtl.print ~database:(Scope.circuit_database scope) Verilog circuit]
 ;;
 
 let command =

@@ -17,7 +17,7 @@ module Test (N : Parallelism) = struct
   ;;
 
   let test ?waves () =
-    let sim = Sim.create Forney.create in
+    let sim = Sim.create (Forney.create (Scope.create ~flatten_design:true ())) in
     let waves, sim = waveform_opt ?waves sim in
     let i = Cyclesim.inputs sim in
     let _o = Cyclesim.outputs ~clock_edge:Before sim in
@@ -97,7 +97,8 @@ let test ?waves parallelism =
 
 let%expect_test "forney - 1 symbol/cycle" =
   ignore (test 1 : _ option);
-  [%expect {|
+  [%expect
+    {|
     c:  5 14 11  0 14 12  4  2  7  7  6  3  5  0  4
     e:  0  0  0  0  0  0  0  0  0 10  0  0 11  0  0
     r:  5 14 11  0 14 12  4  2  7 13  6  3 14  0  4

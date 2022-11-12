@@ -164,7 +164,7 @@ module Decode_file = struct
     in
     let module Decoder = Hardcaml_reedsolomon.Decoder.Make (Gp) (Rp) (Parallelism) in
     let module Sim = Cyclesim.With_interface (Decoder.I) (Decoder.O) in
-    let sim = Sim.create Decoder.create in
+    let sim = Sim.create (Decoder.create (Scope.create ~flatten_design:true ())) in
     let i = Cyclesim.inputs sim in
     let o = Cyclesim.outputs sim in
     let in_file = In_channel.create in_file in

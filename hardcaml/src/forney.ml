@@ -29,7 +29,8 @@ struct
       type 'a t = { e : 'a [@bits Gfh.bits] } [@@deriving sexp_of, hardcaml]
     end
 
-    let create { I.clocking; enable; start; store; ctrl; tap; x } =
+    let create scope { I.clocking; enable; start; store; ctrl; tap; x } =
+      let ( -- ) = Scope.naming scope in
       let spec = Clocking.spec clocking in
       let ghorner ~enable ~tap ~x =
         reg_fb
@@ -51,6 +52,11 @@ struct
       let e = reg spec ~enable Gfh.(v /: h) -- "v_div_l" in
       let e = reg spec ~enable:(enable &: store) Gfh.(x *: e) -- "x_mul_e" in
       { O.e }
+    ;;
+
+    let hierarchy scope =
+      let module Hier = Hierarchy.In_scope (I) (O) in
+      Hier.hierarchical ~scope ~name:"forney_serial" create
     ;;
   end
 
@@ -77,7 +83,8 @@ struct
       [@@deriving sexp_of, hardcaml]
     end
 
-    let create { I.clocking; enable; vld; err; v; l; x } =
+    let create scope { I.clocking; enable; vld; err; v; l; x } =
+      let ( -- ) = Scope.naming scope in
       let spec = Clocking.spec clocking in
       let n_tree = 4 in
       let reg d = reg spec ~enable d in
@@ -104,6 +111,11 @@ struct
       ; ferr = pipe (4 + v_depth) err
       }
     ;;
+
+    let hierarchy scope =
+      let module Hier = Hierarchy.In_scope (I) (O) in
+      Hier.hierarchical ~scope ~name:"forney" create
+    ;;
   end
 
   module Parallel = struct
@@ -129,10 +141,11 @@ struct
       [@@deriving sexp_of, hardcaml]
     end
 
-    let create { I.clocking; enable; vld; err; v; l; x } =
+    let create scope { I.clocking; enable; vld; err; v; l; x } =
       let o =
         Array.init N.n ~f:(fun j ->
-          Forney.create
+          Forney.hierarchy
+            scope
             { Forney.I.clocking; enable; vld = vld.(j); err = err.(j); v; l; x = x.(j) })
       in
       O.
@@ -140,6 +153,11 @@ struct
         ; frdy = Array.map ~f:(fun { Forney.O.frdy; _ } -> frdy) o
         ; ferr = Array.map ~f:(fun { Forney.O.ferr; _ } -> ferr) o
         }
+    ;;
+
+    let hierarchy scope =
+      let module Hier = Hierarchy.In_scope (I) (O) in
+      Hier.hierarchical ~scope ~name:"forney_parallel" create
     ;;
   end
 end

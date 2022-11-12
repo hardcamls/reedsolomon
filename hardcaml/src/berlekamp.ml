@@ -60,7 +60,7 @@ struct
   ;;
 
   (* PE0 unit *)
-  let pe0 n spec enable init delta gamma mc b =
+  let pe0 ( -- ) n spec enable init delta gamma mc b =
     let ( -- ) s name = s -- (name ^ Int.to_string n) in
     let spec = Reg_spec.override ~clear_to:init spec in
     (* lambda update *)
@@ -73,13 +73,13 @@ struct
   ;;
 
   (* ELU unit *)
-  let pe0s clear enable delta gamma mc =
+  let pe0s ( -- ) clear enable delta gamma mc =
     let rec f b n =
       if n > Rp.t
       then []
       else (
         let init = if n = 0 then one else zero in
-        let b, l = pe0 n clear enable (init Gfh.bits) delta gamma mc b in
+        let b, l = pe0 ( -- ) n clear enable (init Gfh.bits) delta gamma mc b in
         l :: f b (n + 1))
     in
     f (zero Gfh.bits) 0
@@ -131,7 +131,7 @@ struct
   ;;
 
   (* control unit *)
-  let ctrl spec enable delta =
+  let ctrl ( -- ) spec enable delta =
     let k_bits = Signal.num_bits_to_represent (2 * Rp.t) + 1 in
     let mc = wire 1 in
     let k =
@@ -149,13 +149,13 @@ struct
   ;;
 
   (* iBM hardware architecture *)
-  let _iBM (clocking : 'a Clocking.t) ~enable ~start ~syndromes =
+  let _iBM ( -- ) (clocking : 'a Clocking.t) ~enable ~start ~syndromes =
     let spec = Clocking.spec clocking in
     let delta = wire Gfh.bits -- "delta" in
     let clear' = clocking.clear |: start in
     let spec_st = Reg_spec.override spec ~clear:clear' in
-    let mc, gamma = ctrl spec_st enable delta in
-    let lambda = pe0s spec_st enable delta gamma mc in
+    let mc, gamma = ctrl ( -- ) spec_st enable delta in
+    let lambda = pe0s ( -- ) spec_st enable delta gamma mc in
     let delta' = rDC spec enable start syndromes lambda in
     let () = delta <== delta' in
     lambda
@@ -166,14 +166,14 @@ struct
     let delta0 = wire Gfh.bits in
     let clear = clocking.clear |: start in
     let spec = Clocking.spec clocking |> Reg_spec.override ~clear in
-    let mc, gamma = ctrl spec enable delta0 in
-    let lambda = pe0s spec enable delta0 gamma mc in
+    let mc, gamma = ctrl ( -- ) spec enable delta0 in
+    let lambda = pe0s ( -- ) spec enable delta0 gamma mc in
     let delta' = pe1s spec enable gamma syndromes delta0 mc in
     let () = delta0 <== List.hd_exn delta' in
     lambda
   ;;
 
-  let rriBM (clocking : 'a Clocking.t) ~enable ~first ~last ~syndromes =
+  let rriBM ( -- ) (clocking : 'a Clocking.t) ~enable ~first ~last ~syndromes =
     let spec = Clocking.spec clocking in
     let syndromes =
       List.concat
@@ -184,7 +184,7 @@ struct
     in
     let delta0 = wire Gfh.bits in
     let mc, gamma =
-      ctrl (Reg_spec.override spec ~clear:(clocking.clear |: first)) enable delta0
+      ctrl ( -- ) (Reg_spec.override spec ~clear:(clocking.clear |: first)) enable delta0
     in
     let delta' = pe1s_2 spec enable first last gamma syndromes delta0 mc in
     let () = delta0 <== fst (List.hd_exn delta') in
@@ -192,8 +192,16 @@ struct
     , List.map ~f:snd (lselect delta' Rp.t (2 * Rp.t)) )
   ;;
 
-  let create { I.clocking; enable; first; last; syndromes } =
-    let w, l = rriBM clocking ~enable ~first ~last ~syndromes:(Array.to_list syndromes) in
+  let create scope { I.clocking; enable; first; last; syndromes } =
+    let ( -- ) = Scope.naming scope in
+    let w, l =
+      rriBM ( -- ) clocking ~enable ~first ~last ~syndromes:(Array.to_list syndromes)
+    in
     O.{ w = Array.of_list w; l = Array.of_list l }
+  ;;
+
+  let hierarchy scope =
+    let module Hier = Hierarchy.In_scope (I) (O) in
+    Hier.hierarchical ~scope ~name:"berlekamp" create
   ;;
 end

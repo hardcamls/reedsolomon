@@ -40,7 +40,7 @@ struct
     Array.init (2 * Rp.t) ~f:(fun i -> syndrome ~spec ~root:(Rs.root i) ~enable ~first ~x)
   ;;
 
-  let create ~scale { I.clocking; enable; first; last; x } =
+  let create ~scale _scope { I.clocking; enable; first; last; x } =
     let spec = Clocking.spec clocking in
     let n = Array.length x in
     let n_tree = 2 in
@@ -73,5 +73,10 @@ struct
             ~enable:last
             (if scale = 0 then syndromes.(i) else Gfh.cmul iroot syndromes.(i)))
     }
+  ;;
+
+  let hierarchy ~scale scope =
+    let module Hier = Hierarchy.In_scope (I) (O) in
+    Hier.hierarchical ~scope ~name:"syndromes" (create ~scale)
   ;;
 end

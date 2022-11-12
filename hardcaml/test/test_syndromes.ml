@@ -18,7 +18,7 @@ module Test (N : Parallelism) = struct
   let offset = (cycles_per_codeword * N.n) - n
 
   let test ?waves () =
-    let sim = Sim.create (Syndromes.create ~scale:offset) in
+    let sim = Sim.create (Syndromes.create ~scale:offset (Scope.create ())) in
     let waves, sim = waveform_opt ?waves sim in
     let i = Cyclesim.inputs sim in
     let o = Cyclesim.outputs sim in

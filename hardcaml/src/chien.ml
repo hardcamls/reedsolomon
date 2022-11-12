@@ -85,7 +85,7 @@ struct
   end
 
   (* produces error location results in reverse order ie from [n_elem-2 ... 0] *)
-  let create { I.clocking; enable; start; lambda } =
+  let create _scope { I.clocking; enable; start; lambda } =
     let spec = Clocking.spec clocking in
     let p = N.n in
     let lambda' = Array.map ~f:(fun _ -> wire Gfh.bits) lambda in
@@ -103,5 +103,10 @@ struct
     let evld, eloc = chien_ctrl spec ~p ~enable ~start in
     let eerr = Array.init p ~f:(fun j -> eval.(j) ==:. 0 &: evld.(j)) in
     { O.eval; eloc; evld; eerr }
+  ;;
+
+  let hierarchy scope =
+    let module Hier = Hierarchy.In_scope (I) (O) in
+    Hier.hierarchical ~scope ~name:"chien" create
   ;;
 end

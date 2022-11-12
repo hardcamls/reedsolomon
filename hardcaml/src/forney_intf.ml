@@ -25,7 +25,8 @@ struct
         type 'a t = { e : 'a } [@@deriving sexp_of, hardcaml]
       end
 
-      val create : Signal.t Interface.Create_fn(I)(O).t
+      val create : Scope.t -> Signal.t Interface.Create_fn(I)(O).t
+      val hierarchy : Scope.t -> Signal.t Interface.Create_fn(I)(O).t
     end
 
     module Parallel : sig
@@ -51,7 +52,8 @@ struct
         [@@deriving sexp_of, hardcaml]
       end
 
-      val create : Signal.t Interface.Create_fn(I)(O).t
+      val create : Scope.t -> Signal.t Interface.Create_fn(I)(O).t
+      val hierarchy : Scope.t -> Signal.t Interface.Create_fn(I)(O).t
     end
   end
 end

@@ -14,7 +14,7 @@ module Test (N : Parallelism) = struct
   ;;
 
   let test ?waves () =
-    let sim = Sim.create Decoder.create in
+    let sim = Sim.create (Decoder.create (Scope.create ~flatten_design:true ())) in
     let waves, sim = waveform_opt ?waves sim in
     let i = Cyclesim.inputs sim in
     let o = Cyclesim.outputs ~clock_edge:Before sim in

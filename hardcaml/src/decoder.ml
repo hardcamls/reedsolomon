@@ -62,33 +62,37 @@ struct
     [@@deriving sexp_of, hardcaml]
   end
 
-  let create_with_debug { I.clocking; enable; load; first; last; x } =
+  let create_with_debug scope { I.clocking; enable; load; first; last; x } =
     let spec = Clocking.spec clocking in
     let reg d = reg spec ~enable d in
     let pipe ~n d = pipeline spec ~enable ~n d in
     (* syndromes *)
     let syn =
-      Syndromes.create
+      Syndromes.hierarchy
+        scope
         ~scale:syndrome_inv_root_scale
         { Syndromes.I.clocking; enable; first; last; x }
     in
     let fifo_re = wire 1 in
     let fifo =
-      Input_fifo.create { Input_fifo.I.clocking; wr = load; d = x; rd = fifo_re }
+      Input_fifo.hierarchy scope { Input_fifo.I.clocking; wr = load; d = x; rd = fifo_re }
     in
     (* berlekamp-massey *)
     let first = syn.valid in
     let last = pipe ~n:(2 * Rp.t) syn.valid in
     let bm =
-      RiBM.create { RiBM.I.clocking; enable; first; last; syndromes = syn.syndromes }
+      RiBM.hierarchy
+        scope
+        { RiBM.I.clocking; enable; first; last; syndromes = syn.syndromes }
     in
     (* chien search *)
     let start = reg last in
-    let ch = Chien.create { Chien.I.clocking; enable; start; lambda = bm.l } in
+    let ch = Chien.hierarchy scope { Chien.I.clocking; enable; start; lambda = bm.l } in
     (* forney *)
     let l = Array.init ((Rp.t + 1) / 2) ~f:(fun i -> bm.l.((i * 2) + 1)) in
     let fy =
-      Forney.Parallel.create
+      Forney.Parallel.hierarchy
+        scope
         { Forney.Parallel.I.clocking
         ; enable
         ; vld = ch.evld
@@ -119,10 +123,15 @@ struct
     { O_debug.syn; bm; ch; fy; corrected; ordy; error_count }
   ;;
 
-  let create i =
+  let create scope i =
     let { O_debug.syn = _; bm = _; ch = _; fy = _; corrected; ordy; error_count } =
-      create_with_debug i
+      create_with_debug scope i
     in
     { O.corrected; ordy; error_count }
+  ;;
+
+  let hierarchy scope =
+    let module Hier = Hierarchy.In_scope (I) (O) in
+    Hier.hierarchical ~scope ~name:"rsdecoder" create
   ;;
 end

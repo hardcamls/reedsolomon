@@ -27,7 +27,8 @@ struct
     [@@deriving sexp_of, hardcaml]
   end
 
-  let create { I.clocking; wr; d; rd } =
+  let create scope { I.clocking; wr; d; rd } =
+    let ( -- ) = Scope.naming scope in
     let spec = Clocking.spec clocking in
     let fbits = Signal.num_bits_to_represent cycles_per_codeword in
     let felems = 1 lsl fbits in
@@ -49,5 +50,10 @@ struct
       Array.init N.n ~f:(fun i -> select q (((i + 1) * Gfh.bits) - 1) (i * Gfh.bits))
     in
     O.{ q }
+  ;;
+
+  let hierarchy scope =
+    let module Hier = Hierarchy.In_scope (I) (O) in
+    Hier.hierarchical ~scope ~name:"input_fifo" create
   ;;
 end
