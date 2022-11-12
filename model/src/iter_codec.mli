@@ -1,4 +1,4 @@
-type rsparams =
+type params =
   { m : int (* bits per symbol *)
   ; k : int (* message symbols *)
   ; t : int (* correction capability, 2t=parity symbols *)
@@ -9,14 +9,13 @@ type rsparams =
   }
 [@@deriving sexp_of]
 
-type rspoly = int array
+type poly = int array
 
-val rspoly : int -> rspoly
+val rspoly : int -> poly
 
-type rscodec =
-  { params : rsparams
-  ; encode : rspoly -> rspoly -> unit
-  ; decode : rspoly -> rspoly -> int
-  }
+type t
 
-val init : rsparams -> rscodec
+val init : params -> t
+val params : t -> params
+val encode : t -> poly -> poly -> unit
+val decode : t -> poly -> poly -> int
