@@ -7,5 +7,6 @@ let () =
        [ "simulate", Simulate.command
        ; "generate", Generate.command
        ; "model", Model.command
+       ; "files", Hw_file.command
        ])
 ;;
