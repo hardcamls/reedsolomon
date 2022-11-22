@@ -16,7 +16,6 @@ end
 type poly = int array
 
 let rspoly n = Array.make n 0
-let to_string = Array.fold_left (fun s x -> s ^ " " ^ string_of_int x) ""
 
 type t =
   { params : params
@@ -61,7 +60,7 @@ let init p =
   in
   let shiftup (a : int array) (b : int array) =
     for i = len a - 1 downto 0 do
-      a.(i) <- get a (i - 1)
+      a.(i) <- get b (i - 1)
     done
   in
   let shiftdown (a : int array) (b : int array) =
@@ -133,9 +132,8 @@ let init p =
         let update_delta i =
           G.((!gamma *: get delta' (i + 1)) -: (delta'.(0) *: theta.(i)))
         in
-        for r = 0 to (2 * t) - 1 do
-          (* this is systolic, so much data is 0 during
-                               part of the iteration *)
+        for _ = 0 to (2 * t) - 1 do
+          (* this is systolic, so much data is 0 during part of the iteration *)
           (* step 1 *)
           copy lambda' lambda;
           copy delta' delta;

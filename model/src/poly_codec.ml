@@ -30,7 +30,7 @@ module Make (G : Galois.Table_ops) (P : Params) = struct
   let syndromes r = Array.init (2 * P.t) (fun i -> horner r (root i))
 
   let key_equations s v =
-    M.init v v (fun r c -> s.(v - (c + 1) + r)), M.init v 1 (fun r c -> s.(v + r))
+    M.init v v (fun r c -> s.(v - (c + 1) + r)), M.init v 1 (fun r _c -> s.(v + r))
   ;;
 
   (* K.L = S => K^-1.S = L, iff det(S) <> 0 *)
@@ -101,7 +101,7 @@ module Make (G : Galois.Table_ops) (P : Params) = struct
   (* calculate error locator poly using the berlekamp-massey algorithm *)
   let berlekamp_massey s =
     let one, x = R.(one, one ^: 1) in
-    let rec f k ((n, c, l) as x) =
+    let rec f k ((n, _c, _l) as x) =
       if k > 2 * P.t
       then n
       else (
@@ -146,7 +146,7 @@ module Make (G : Galois.Table_ops) (P : Params) = struct
 
     let shiftup a b =
       for i = Array.length a - 1 downto 0 do
-        a.(i) <- get a (i - 1)
+        a.(i) <- get b (i - 1)
       done
     ;;
 
@@ -227,7 +227,7 @@ module Make (G : Galois.Table_ops) (P : Params) = struct
         let update_delta i =
           G.((!gamma *: get delta' (i + 1)) -: (delta'.(0) *: theta.(i)))
         in
-        for r = 0 to (2 * t) - 1 do
+        for _ = 0 to (2 * t) - 1 do
           (* step 1 *)
           copy lambda' lambda;
           copy delta' delta;
@@ -272,7 +272,7 @@ module Make (G : Galois.Table_ops) (P : Params) = struct
         let update_delta i =
           G.((!gamma *: get delta' (i + 1)) -: (delta'.(0) *: theta.(i)))
         in
-        for i = 0 to (2 * t) - 1 do
+        for _ = 0 to (2 * t) - 1 do
           (* step 1 *)
           copy delta' delta;
           iteri delta update_delta;
@@ -387,7 +387,10 @@ module Make (G : Galois.Table_ops) (P : Params) = struct
 
   let erasure_locator y =
     let terms = List.map (fun y -> [| G.one; G.(alpha **: y) |]) y in
-    List.fold_left (fun a x -> R.(a *: x)) R.one terms
+    (* XXX why aren't we using the x parameter - this looks like a bug, but I
+       dont know what the formula actually is. Anyway, erasure stuff doesn't
+       work entirely right just now. *)
+    List.fold_left (fun a _x -> R.(a *: x)) R.one terms
   ;;
 
   let zero_erasures r y =
@@ -443,7 +446,7 @@ module Make (G : Galois.Table_ops) (P : Params) = struct
   ;;
 
   (* XXX Never got this to work properly... *)
-  let decode_errors_and_erasures_berlekamp_massey r y =
+  let _decode_errors_and_erasures_berlekamp_massey r y =
     (*let f = List.length y in*)
     let tau = erasure_locator y in
     let r = zero_erasures r y in

@@ -79,7 +79,6 @@ module Make (E : Ops.S) = struct
   ;;
 
   let to_string ?(down = true) ?(str = string_format true poly_format) p =
-    let open Printf in
     let sep a s =
       if String.is_empty a then s else if down then s ^ " + " ^ a else a ^ " + " ^ s
     in

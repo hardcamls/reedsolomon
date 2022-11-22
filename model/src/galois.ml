@@ -264,7 +264,7 @@ module To_int_table_field (Ops : Table_ops with type t = int array) = struct
       antilog (a - b))
   ;;
 
-  let rec ( **: ) a n =
+  let ( **: ) a n =
     if n = 0
     then one
     else if a = zero
