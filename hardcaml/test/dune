@@ -1,5 +1,8 @@
 (library
  (name test_hardcaml_reedsolomon)
+ ; XXX why does this need to be public.  We wanna see it inside a dune workspace,
+ ; but not publish it.
+ (public_name reedsolomon.test_hardcaml)
  (flags (:standard -w -27-32-33-35-39-50))
  (libraries core hardcaml reedsolomon hardcaml_reedsolomon hardcaml_waveterm)
  (inline_tests)

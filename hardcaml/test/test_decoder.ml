@@ -1,9 +1,9 @@
 open Core
 open Hardcaml
 open Hardcaml_waveterm
-open Util
 
-module Test (N : Parallelism) = struct
+module Test (Standard : Reedsolomon.Standards.Standard) (N : Util.Parallelism) = struct
+  include Util.Make (Standard)
   module Decoder = Hw.Decoder (N)
   module Sim = Cyclesim.With_interface (Decoder.I) (Decoder.O)
 
@@ -63,9 +63,11 @@ end
 
 let test ?waves parallelism =
   let module Test =
-    Test (struct
-      let n = parallelism
-    end)
+    Test
+      (Reedsolomon.Standards.BBCTest)
+      (struct
+        let n = parallelism
+      end)
   in
   Test.test ?waves ()
 ;;
