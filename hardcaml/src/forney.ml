@@ -3,13 +3,15 @@ open Hardcaml
 open Signal
 
 module Make
-  (Gp : Reedsolomon.Galois.Table_params)
-  (Rp : Reedsolomon.Poly_codec.Params)
-  (N : Parallelism.S) =
+    (Gp : Reedsolomon.Galois.Table_params)
+    (Rp : Reedsolomon.Poly_codec.Params)
+    (N : Parallelism.S) =
 struct
   module Gfh = Galois.Make (Signal) (Gp)
   module Gfs = Gfh.G
   module Rs = Reedsolomon.Poly_codec.Make (Gfs) (Rp)
+
+  module type Gfh = Galois.S with type t = Signal.t and type bits := Signal.t
 
   module Serial = struct
     module I = struct
@@ -30,6 +32,7 @@ struct
     end
 
     let create scope { I.clocking; enable; start; store; ctrl; tap; x } =
+      let module Gfh = (val Galois.of_scope (module Gp) scope) in
       let ( -- ) = Scope.naming scope in
       let spec = Clocking.spec clocking in
       let ghorner ~enable ~tap ~x =
@@ -84,6 +87,7 @@ struct
     end
 
     let create scope { I.clocking; enable; vld; err; v; l; x } =
+      let module Gfh = (val Galois.of_scope (module Gp) scope) in
       let ( -- ) = Scope.naming scope in
       let spec = Clocking.spec clocking in
       let n_tree = 4 in
@@ -144,9 +148,9 @@ struct
     let create scope { I.clocking; enable; vld; err; v; l; x } =
       let o =
         Array.init N.n ~f:(fun j ->
-          Forney.hierarchy
-            scope
-            { Forney.I.clocking; enable; vld = vld.(j); err = err.(j); v; l; x = x.(j) })
+            Forney.hierarchy
+              scope
+              { Forney.I.clocking; enable; vld = vld.(j); err = err.(j); v; l; x = x.(j) })
       in
       O.
         { emag = Array.map ~f:(fun { Forney.O.emag; _ } -> emag) o

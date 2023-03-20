@@ -3,9 +3,9 @@ open Hardcaml
 open Signal
 
 module Make
-  (Gp : Reedsolomon.Galois.Table_params)
-  (Rp : Reedsolomon.Poly_codec.Params)
-  (N : Parallelism.S) =
+    (Gp : Reedsolomon.Galois.Table_params)
+    (Rp : Reedsolomon.Poly_codec.Params)
+    (N : Parallelism.S) =
 struct
   module Gfh = Galois.Make (Signal) (Gp)
   module Gfs = Gfh.G
@@ -30,17 +30,19 @@ struct
     [@@deriving sexp_of, hardcaml]
   end
 
-  let syndrome ~spec ~root ~enable ~first ~x =
+  let syndrome scope ~spec ~root ~enable ~first ~x =
+    let module Gfh = (val Galois.of_scope (module Gp) scope) in
     reg_fb spec ~enable ~width:Gfh.bits ~f:(fun d ->
-      let d = mux2 first Gfh.zero d in
-      Gfh.(cmul root d +: x))
+        let d = mux2 first Gfh.zero d in
+        Gfh.(cmul root d +: x))
   ;;
 
   let _syndromes ~spec ~enable ~first ~x =
     Array.init (2 * Rp.t) ~f:(fun i -> syndrome ~spec ~root:(Rs.root i) ~enable ~first ~x)
   ;;
 
-  let create ~scale _scope { I.clocking; enable; first; last; x } =
+  let create ~scale scope { I.clocking; enable; first; last; x } =
+    let module Gfh = (val Galois.of_scope (module Gp) scope) in
     let spec = Clocking.spec clocking in
     let n = Array.length x in
     let n_tree = 2 in
@@ -54,24 +56,24 @@ struct
     in
     let horner enable first c x =
       reg_fb spec ~enable ~width:Gfh.bits ~f:(fun d ->
-        Gfh.(x +: cmul c (mux2 first zero d)))
+          Gfh.(x +: cmul c (mux2 first zero d)))
     in
     let syndrome enable first root_n root x = horner enable first root_n (eval root x) in
     let first = pipeline spec ~enable ~n:(1 + Util.tree_depth n_tree n) first in
     let last = pipeline spec ~enable ~n:(2 + Util.tree_depth n_tree n) last in
     let syndromes =
       Array.init (2 * Rp.t) ~f:(fun i ->
-        let root = Rs.root i in
-        syndrome enable first Gfs.(root **: n) root x)
+          let root = Rs.root i in
+          syndrome enable first Gfs.(root **: n) root x)
     in
     { O.valid = reg spec ~enable last
     ; syndromes =
         Array.init (Array.length syndromes) ~f:(fun i ->
-          let iroot = Gfs.(inv (Rs.root i **: scale)) in
-          reg
-            spec
-            ~enable:last
-            (if scale = 0 then syndromes.(i) else Gfh.cmul iroot syndromes.(i)))
+            let iroot = Gfs.(inv (Rs.root i **: scale)) in
+            reg
+              spec
+              ~enable:last
+              (if scale = 0 then syndromes.(i) else Gfh.cmul iroot syndromes.(i)))
     }
   ;;
 

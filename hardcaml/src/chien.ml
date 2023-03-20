@@ -3,9 +3,9 @@ open Hardcaml
 open Signal
 
 module Make
-  (Gp : Reedsolomon.Galois.Table_params)
-  (Rp : Reedsolomon.Poly_codec.Params)
-  (N : Parallelism.S) =
+    (Gp : Reedsolomon.Galois.Table_params)
+    (Rp : Reedsolomon.Poly_codec.Params)
+    (N : Parallelism.S) =
 struct
   module Gfh = Galois.Make (Signal) (Gp)
   module Gfs = Gfh.G
@@ -14,7 +14,7 @@ struct
   let _chien clocking ~enable ~lambda =
     let f i l =
       reg_fb (Clocking.spec ~clear_to:l clocking) ~enable ~width:Gfh.bits ~f:(fun l ->
-        Gfh.cmul (Gfs.antilog i) l)
+          Gfh.cmul (Gfs.antilog i) l)
     in
     let l = List.mapi ~f lambda in
     tree ~arity:2 ~f:(reduce ~f:Gfh.( +: )) l
@@ -32,7 +32,8 @@ struct
   let rp_n = Rp.k + Rp.t + Rp.t
   let cycles_per_codeword = (rp_n + N.n - 1) / N.n
 
-  let chien_ctrl spec ~p ~enable ~start =
+  let chien_ctrl scope spec ~p ~enable ~start =
+    let module Gfh = (val Galois.of_scope (module Gp) scope) in
     let sm = Always.State_machine.create (module State) spec ~enable in
     let vld = Var.wire ~default:gnd in
     let cnt = Var.reg spec ~enable ~width:(Base.Int.ceil_log2 cycles_per_codeword) in
@@ -52,16 +53,16 @@ struct
           ])
     in
     ( Array.init p ~f:(fun i ->
-        if ((cycles_per_codeword - 1) * p) + i >= rp_n
-        then mux2 cnt_last gnd vld.value
-        else vld.value)
+          if ((cycles_per_codeword - 1) * p) + i >= rp_n
+          then mux2 cnt_last gnd vld.value
+          else vld.value)
     , Array.init p ~f:(fun i ->
-        let init = of_int ~width:Gfh.bits (1 + i) in
-        reg_fb
-          (Reg_spec.override spec ~clear_to:init)
-          ~enable:(enable &: vld.value)
-          ~width:Gfh.bits
-          ~f:(fun d -> mux2 cnt_last init (Gfh.modfs (ue d +:. p)))) )
+          let init = of_int ~width:Gfh.bits (1 + i) in
+          reg_fb
+            (Reg_spec.override spec ~clear_to:init)
+            ~enable:(enable &: vld.value)
+            ~width:Gfh.bits
+            ~f:(fun d -> mux2 cnt_last init (Gfh.modfs (ue d +:. p)))) )
   ;;
 
   module I = struct
@@ -85,7 +86,8 @@ struct
   end
 
   (* produces error location results in reverse order ie from [n_elem-2 ... 0] *)
-  let create _scope { I.clocking; enable; start; lambda } =
+  let create scope { I.clocking; enable; start; lambda } =
+    let module Gfh = (val Galois.of_scope (module Gp) scope) in
     let spec = Clocking.spec clocking in
     let p = N.n in
     let lambda' = Array.map ~f:(fun _ -> wire Gfh.bits) lambda in
@@ -100,7 +102,7 @@ struct
     let eval =
       Array.map ~f:(fun c -> tree ~arity:2 ~f:(reduce ~f:Gfh.( +: )) (Array.to_list c)) c
     in
-    let evld, eloc = chien_ctrl spec ~p ~enable ~start in
+    let evld, eloc = chien_ctrl scope spec ~p ~enable ~start in
     let eerr = Array.init p ~f:(fun j -> eval.(j) ==:. 0 &: evld.(j)) in
     { O.eval; eloc; evld; eerr }
   ;;
