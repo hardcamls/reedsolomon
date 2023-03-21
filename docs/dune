@@ -1,0 +1,4 @@
+(mdx
+  (files reedsolomon.md)
+  (libraries base reedsolomon)
+)
