@@ -38,14 +38,14 @@ module Test (N : Parallelism) = struct
       i.lambda.(j) := Bits.of_int ~width:sbits l.(j)
     done;
     let results = ref [] in
-    for j = 0 to ((n_elems + N.n) / N.n) - 1 do
+    for _ = 0 to ((n_elems + N.n) / N.n) - 1 do
       for p = 0 to N.n - 1 do
         if Bits.is_vdd !(o.eerr.(p)) then results := Bits.to_int !(o.eloc.(p)) :: !results
       done;
       Cyclesim.cycle sim;
       i.start := Bits.gnd
     done;
-    for j = 0 to 3 do
+    for _ = 0 to 3 do
       Cyclesim.cycle sim
     done;
     if not ([%compare.equal: int list] ch (List.sort ~compare:Int.compare !results))
@@ -90,7 +90,7 @@ let%expect_test "chien search - 6 symbols/cycle" =
 ;;
 
 let%expect_test "random examples" =
-  for i = 1 to 100 do
+  for _ = 1 to 100 do
     ignore (test 1 : _ option)
   done;
   [%expect {| |}]

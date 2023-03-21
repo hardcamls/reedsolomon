@@ -1,5 +1,6 @@
 (library
  (name reedsolomon)
  (public_name reedsolomon.model)
+ (flags (:standard -w -67)) ; XXX only needed for CI task, not local builds??
  (preprocess (pps ppx_jane)))
 

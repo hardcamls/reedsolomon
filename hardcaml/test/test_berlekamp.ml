@@ -52,7 +52,7 @@ let test ?waves num_errors =
     raise_s
       [%message
         (bm_sw_w : Sw.R.poly) (w : Sw.R.poly) (bm_sw_l : Sw.R.poly) (l : Sw.R.poly)];
-  for i = 0 to 2 do
+  for _ = 0 to 2 do
     Cyclesim.cycle sim
   done;
   waves

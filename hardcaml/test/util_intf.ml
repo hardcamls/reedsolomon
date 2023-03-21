@@ -1,5 +1,5 @@
-open Core
-open Hardcaml
+open! Core
+open! Hardcaml
 
 module type S = sig
   module Sw : Reedsolomon.Standards.Standard

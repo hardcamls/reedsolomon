@@ -79,7 +79,7 @@ module Test (N : Parallelism) = struct
       Cyclesim.cycle sim
     done;
     (* some flush cycles *)
-    for j = 0 to 4 do
+    for _ = 0 to 4 do
       Cyclesim.cycle sim
     done;
     waves
