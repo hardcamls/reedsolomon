@@ -8,9 +8,10 @@ license: "ISC"
 depends: [
   "dune" {>= "3.4"}
   "hardcaml"
+  "ppx_deriving_hardcaml"
   "hardcaml_waveterm" {with-test}
   "core"
-  "ppx_deriving_hardcaml"
+  "mdx"
   "odoc" {with-doc}
 ]
 build: [
