@@ -2,6 +2,8 @@
  (name test_hardcaml_reedsolomon)
  (public_name reedsolomon.test_hardcaml)
  (libraries core hardcaml reedsolomon hardcaml_reedsolomon hardcaml_waveterm)
+ (flags
+  (:standard -w -67)) ; XXX only needed for CI task, not local builds??
  (inline_tests)
- (preprocess (pps ppx_jane ppx_deriving_hardcaml)))
-
+ (preprocess
+  (pps ppx_jane ppx_deriving_hardcaml)))
