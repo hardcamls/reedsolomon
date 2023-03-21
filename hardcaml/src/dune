@@ -2,5 +2,6 @@
  (name hardcaml_reedsolomon)
  (public_name reedsolomon.hardcaml)
  (libraries hardcaml reedsolomon)
+ (flags (:standard -w -67)) ; XXX only needed for CI task, not local builds??
  (preprocess (pps ppx_jane ppx_deriving_hardcaml)))
 
