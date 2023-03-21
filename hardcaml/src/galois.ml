@@ -2,6 +2,8 @@
 open Base
 open Hardcaml
 
+module type S = Galois_intf.S
+
 module Make (B : Comb.S) (P : Reedsolomon.Galois.Table_params) = struct
   module G = Reedsolomon.Galois.Int_table_of_params (P)
 
@@ -73,17 +75,16 @@ module Make (B : Comb.S) (P : Reedsolomon.Galois.Table_params) = struct
       let sums =
         tree
           ~arity:2
-          ~f:
-            (function
-             | [ a ] -> a
-             | [ a; b ] -> a +: b
-             | _ -> failwith "bad tree")
+          ~f:(function
+            | [ a ] -> a
+            | [ a; b ] -> a +: b
+            | _ -> failwith "bad tree")
           (split x)
       in
       modu s sums)
   ;;
 
-  let modfs = modu bits
+  let modfs x = modu bits x
 
   let ( **: ) a n =
     let a' = log a in
@@ -99,9 +100,9 @@ module Make (B : Comb.S) (P : Reedsolomon.Galois.Table_params) = struct
     (* create shifted vectors based on the constant *)
     let shf =
       Array.init m ~f:(fun j ->
-        Array.init n ~f:(fun i ->
-          let x = j - i in
-          if j < i || j >= i + n || c land (1 lsl x) = 0 then 0 else 1))
+          Array.init n ~f:(fun i ->
+              let x = j - i in
+              if j < i || j >= i + n || c land (1 lsl x) = 0 then 0 else 1))
     in
     (* for powers > n convert modulo the generator poly *)
     for i = n to m - 1 do
@@ -133,3 +134,105 @@ module Make (B : Comb.S) (P : Reedsolomon.Galois.Table_params) = struct
   let cpow x c = if c = 0 then one else if c = 1 then x else rom (fun i -> G.(i **: c)) x
   let cmul ?(rom = true) = if rom then cmul_rom else cmul_gates
 end
+
+module Make_hierarchical (Scope : sig
+  val scope : Scope.t
+end)
+(P : Reedsolomon.Galois.Table_params) =
+struct
+  include Make (Signal) (P)
+
+  module X = struct
+    type 'a t = { x : 'a [@bits bits] } [@@deriving sexp_of, hardcaml]
+  end
+
+  module XY = struct
+    type 'a t =
+      { x : 'a [@bits bits]
+      ; y : 'a [@bits bits]
+      }
+    [@@deriving sexp_of, hardcaml]
+  end
+
+  module O = struct
+    type 'a t = { o : 'a [@bits bits] } [@@deriving sexp_of, hardcaml]
+  end
+
+  module N (P : sig
+    val n : int
+  end) =
+  struct
+    type 'a t = { n : 'a [@bits P.n] } [@@deriving sexp_of, hardcaml]
+  end
+
+  module XN (P : sig
+    val n : int
+  end) =
+  struct
+    type 'a t =
+      { x : 'a [@bits bits]
+      ; n : 'a [@bits P.n]
+      }
+    [@@deriving sexp_of, hardcaml]
+  end
+
+  let xo ~name f x =
+    let create _scope (x : _ X.t) = { O.o = f x.x } in
+    let module Hier = Hierarchy.In_scope (X) (O) in
+    (Hier.hierarchical ~name ~scope:Scope.scope create { X.x }).o
+  ;;
+
+  let xyo ~name f x y =
+    let create _scope (xy : _ XY.t) = { O.o = f xy.x xy.y } in
+    let module Hier = Hierarchy.In_scope (XY) (O) in
+    (Hier.hierarchical ~name ~scope:Scope.scope create { XY.x; y }).o
+  ;;
+
+  let no ~name f n =
+    let module N =
+      N (struct
+        let n = Signal.width n
+      end)
+    in
+    let create _scope (n : _ N.t) = { O.o = f n.n } in
+    let module Hier = Hierarchy.In_scope (N) (O) in
+    (Hier.hierarchical ~name ~scope:Scope.scope create { N.n }).o
+  ;;
+
+  let log = xo ~name:"gf_log" log
+  let antilog = xo ~name:"gf_antilog" antilog
+  let inv = xo ~name:"gf_inv" inv
+  let ( +: ) = xyo ~name:"gf_add" ( +: )
+  let ( -: ) = xyo ~name:"gf_sub" ( -: )
+  let ( *: ) = xyo ~name:"gf_mul" ( *: )
+  let modfs = no ~name:"gf_modfs" modfs
+  let ( /: ) = xyo ~name:"gf_div" ( /: )
+
+  let ( **: ) x n =
+    let module XN =
+      XN (struct
+        let n = Signal.width n
+      end)
+    in
+    let create _scope (xn : _ XN.t) = { O.o = xn.x **: xn.n } in
+    let module Hier = Hierarchy.In_scope (XN) (O) in
+    (Hier.hierarchical ~name:"gf_pow" ~scope:Scope.scope create { XN.x; n }).o
+  ;;
+
+  let rom f = no ~name:"gf_rom" (rom f)
+  let cpow x p = xo ~name:"gf_cpow" (fun x -> cpow x p) x
+  let cmul ?rom t = xo ~name:"gf_cmul" (cmul ?rom t)
+end
+
+module type S_scoped = S with type t = Signal.t and type bits := Signal.t
+
+let of_scope (module Gp : Reedsolomon.Galois.Table_params) scope =
+  let module Gfh =
+    Make_hierarchical
+      (struct
+        let scope = scope
+      end)
+      (Gp)
+  in
+  (module Gfh : S_scoped)
+;;

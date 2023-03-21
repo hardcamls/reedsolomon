@@ -17,7 +17,7 @@ let display_rules =
 ;;
 
 let test ?waves num_errors =
-  let sim = Sim.create (RiBM.create (Scope.create ())) in
+  let sim = Sim.create (RiBM.create (Scope.create ~flatten_design:true ())) in
   let waves, sim = waveform_opt ?waves sim in
   let i = Cyclesim.inputs sim in
   let _o = Cyclesim.outputs ~clock_edge:Before sim in
