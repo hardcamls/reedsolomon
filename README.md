@@ -3,6 +3,8 @@
 OCaml library implementing a Reed-Solomon error correction CODEC and corresponding 
 implementation in Hardcaml.
 
+![build status](https://github.com/hardcamls/reedsolomon/actions/workflows/main.yml/badge.svg)
+
 # About RS coding
 
 A Reed-Solomon (RS) CODEC takes blocks of symbols and adds some number of parity symbols
