@@ -107,7 +107,7 @@ let command_decoder =
 
 let command =
   Command.group
-    ~summary:"RS codec simulation tests"
+    ~summary:"RS codec simulation testbenches"
     [ "encoder", command_encoder
     ; "decoder", command_decoder
     ; "syndromes", command_syndromes

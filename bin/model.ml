@@ -6,6 +6,7 @@ type params = Reedsolomon.Iter_codec.params [@@deriving sexp_of]
 module type Codec = sig
   type t
 
+  val name : string
   val init : params -> t
   val decode : t -> int array -> int array
   val encode : t -> int array -> int array
@@ -13,6 +14,8 @@ end
 
 module Iter_codec : Codec = struct
   include Reedsolomon.Iter_codec
+
+  let name = "iterative"
 
   let encode t message =
     let parity = Array.create ~len:((params t).t * 2) 0 in
@@ -33,6 +36,7 @@ end) : Codec = struct
   type t =
     { rp : (module Reedsolomon.Poly_codec.Params)
     ; g : (module Reedsolomon.Galois.Table_ops with type t = int)
+    ; params : params
     }
 
   let init (params : params) =
@@ -48,12 +52,20 @@ end) : Codec = struct
     end
     in
     let module G = Reedsolomon.Galois.Int_table_of_params (Gp) in
-    { rp = (module Rp); g = (module G) }
+    { rp = (module Rp); g = (module G); params }
+  ;;
+
+  let name =
+    match Decoder.decoder with
+    | `euclid -> "euclid"
+    | `peterson -> "peterson"
+    | `berlekamp -> "berlekamp"
   ;;
 
   let encode t (message : int array) =
     let module Codec = Reedsolomon.Poly_codec.Make ((val t.g)) ((val t.rp)) in
     let encoded = Codec.encode (Array.rev message) in
+    let encoded = Codec.R.slice encoded (t.params.n - 1) in
     Array.rev encoded
   ;;
 
@@ -61,41 +73,50 @@ end) : Codec = struct
     let module Codec = Reedsolomon.Poly_codec.Make ((val t.g)) ((val t.rp)) in
     let decoded =
       (match Decoder.decoder with
-       | `euclid -> Codec.decode_euclid
-       | `peterson -> Codec.decode_peterson
-       | `berlekamp -> Codec.decode_berlekamp_massey)
+      | `euclid -> Codec.decode_euclid
+      | `peterson -> Codec.decode_peterson
+      | `berlekamp -> Codec.decode_berlekamp_massey)
         (Array.rev message)
     in
+    let decoded = Codec.R.slice decoded (t.params.n - 1) in
     Array.rev decoded
   ;;
 end
 
-let codec_selection_arg =
-  Command.Arg_type.create (function
-    | "peterson" ->
-      let module Codec =
-        Poly_codec (struct
-          let decoder = `peterson
-        end)
-      in
-      (module Codec : Codec)
-    | "euclid" ->
-      let module Codec =
-        Poly_codec (struct
-          let decoder = `euclid
-        end)
-      in
-      (module Codec : Codec)
-    | "berlekamp" | "berlekamp-massey" ->
-      let module Codec =
-        Poly_codec (struct
-          let decoder = `berlekamp
-        end)
-      in
-      (module Codec : Codec)
-    | "iter" | "iterative" -> (module Iter_codec : Codec)
-    | _ -> raise_s [%message "invalid codec specification"])
+let codec_selection =
+  [ (let module Codec =
+       Poly_codec (struct
+         let decoder = `peterson
+       end)
+     in
+    (module Codec : Codec))
+  ; (let module Codec =
+       Poly_codec (struct
+         let decoder = `euclid
+       end)
+     in
+    (module Codec : Codec))
+  ; (let module Codec =
+       Poly_codec (struct
+         let decoder = `berlekamp
+       end)
+     in
+    (module Codec : Codec))
+  ; (module Iter_codec : Codec)
+  ]
 ;;
+
+let find_codec name =
+  match
+    List.find codec_selection ~f:(fun (module Codec) -> String.equal name Codec.name)
+  with
+  | Some codec -> codec
+  | None ->
+    let codecs = List.map codec_selection ~f:(fun (module Codec) -> Codec.name) in
+    raise_s [%message "Invalid codec" (name : string) (codecs : string list)]
+;;
+
+let codec_selection_arg = Command.Arg_type.create find_codec
 
 let random_codes (params : params) n =
   Array.init n ~f:(fun _ -> Random.int (1 lsl params.m))
@@ -106,7 +127,7 @@ let random_message (params : params) = random_codes params params.k
 let random_errors (params : params) ~num_errors =
   let errors =
     Array.init params.n ~f:(fun i ->
-      if i < num_errors then 1 + Random.int ((1 lsl params.m) - 1) else 0)
+        if i < num_errors then 1 + Random.int ((1 lsl params.m) - 1) else 0)
   in
   Array.permute errors;
   errors
@@ -219,6 +240,44 @@ let command_decode =
         Array.iter decoded ~f:(printf "%i\n")]
 ;;
 
+type correctness_input =
+  { message : int array
+  ; errors : int array
+  ; num_errors : int
+  }
+
+let create_correctness_input (params : params) =
+  let num_errors = Random.int (params.t + 1) in
+  { message = random_message params
+  ; errors = random_errors params ~num_errors
+  ; num_errors
+  }
+;;
+
+let test_correctness ~params ~verbose ~codec { message; errors; num_errors } =
+  let module Codec = (val codec : Codec) in
+  if verbose then print_s [%message (params : params)];
+  let codec = Codec.init params in
+  let codeword = Codec.encode codec message in
+  let corrupted_codeword = Array.map2_exn codeword errors ~f:( lxor ) in
+  let decoded_message = Codec.decode codec corrupted_codeword in
+  let diff = Array.map2_exn codeword decoded_message ~f:( lxor ) in
+  let msg () =
+    [%message
+      "failed to decode message"
+        (Codec.name : string)
+        (num_errors : int)
+        (codeword : int array)
+        (decoded_message : int array)
+        (errors : int array)
+        (diff : int array)]
+  in
+  if verbose
+  then print_s (msg ())
+  else if not ([%compare.equal: int array] decoded_message codeword)
+  then raise_s (msg ())
+;;
+
 let command_correctness =
   Command.basic
     ~summary:"Test correctness of a particular codec configuration"
@@ -232,32 +291,67 @@ let command_correctness =
           "-codec"
           (optional_with_default (module Iter_codec : Codec) codec_selection_arg)
           ~doc:"CODEC select codec implementation (default iterative)"
+      and seed = flag "-seed" (optional int) ~doc:"Random number generator seed" in
+      fun () ->
+        Option.iter seed ~f:Random.init;
+        for _ = 1 to num_tests do
+          test_correctness ~params ~verbose ~codec (create_correctness_input params)
+        done]
+;;
+
+let params =
+  let params n t b =
+    let m = Int.ceil_log2 (n + 1) in
+    { Reedsolomon.Iter_codec.m
+    ; k = n - (2 * t)
+    ; t
+    ; n
+    ; b
+    ; prim_poly = Codec_args.default_poly m
+    ; prim_elt = 2
+    }
+  in
+  [ params 7 1 0
+  ; params 7 2 1
+  ; params 15 1 0
+  ; params 15 2 3
+  ; params 63 3 0
+  ; params 63 4 9
+  ; params 255 8 0
+  ; params 255 16 33
+  ]
+;;
+
+let command_regression =
+  Command.basic
+    ~summary:"Iterate over various CODEC parameters and check for correctness"
+    [%map_open.Command
+      let verbose = flag "-v" no_arg ~doc:"Display codec parameters"
+      and num_tests =
+        flag "-num-tests" (optional_with_default 1 int) ~doc:"NUM number of test to run"
+      and codec =
+        flag
+          "-codec"
+          (optional codec_selection_arg)
+          ~doc:"CODEC select codec implementation to test (default all)"
       in
       fun () ->
-        let module Codec = (val codec : Codec) in
-        if verbose then print_s [%message (params : params)];
-        let codec = Codec.init params in
-        for i = 0 to num_tests - 1 do
-          let message = random_message params in
-          let parity = Codec.encode codec message in
-          let codeword = Array.concat [ message; parity ] in
-          let num_errors = Random.int (params.t + 1) in
-          let errors = random_errors params ~num_errors in
-          let corrupted_codeword = Array.map2_exn codeword errors ~f:( lxor ) in
-          let decoded_message = Codec.decode codec corrupted_codeword in
-          if not ([%compare.equal: int array] decoded_message codeword)
-          then (
-            let diff = Array.map2_exn codeword decoded_message ~f:( lxor ) in
-            raise_s
-              [%message
-                "failed to decode message"
-                  (i : int)
-                  (num_errors : int)
-                  (codeword : int array)
-                  (decoded_message : int array)
-                  (errors : int array)
-                  (diff : int array)])
-        done]
+        (* choose a codec, or test them all *)
+        let codec_selection =
+          Option.map codec ~f:(fun codec -> [ codec ])
+          |> Option.value ~default:codec_selection
+        in
+        if verbose
+        then (
+          let codecs = List.map codec_selection ~f:(fun (module Codec) -> Codec.name) in
+          print_s [%message (codecs : string list)]);
+        List.iter params ~f:(fun params ->
+            if verbose then print_s [%message (params : params)];
+            let inputs = create_correctness_input params in
+            List.iter codec_selection ~f:(fun codec ->
+                for _ = 1 to num_tests do
+                  test_correctness ~params ~verbose:false ~codec inputs
+                done))]
 ;;
 
 let command =
@@ -268,5 +362,6 @@ let command =
     ; "message", command_message
     ; "errors", command_errors
     ; "correctness", command_correctness
+    ; "regression", command_regression
     ]
 ;;
