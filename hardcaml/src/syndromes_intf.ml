@@ -26,8 +26,8 @@ struct
       [@@deriving sexp_of, hardcaml]
     end
 
-    val create : scale:int -> Scope.t -> Signal.t Interface.Create_fn(I)(O).t
-    val hierarchy : scale:int -> Scope.t -> Signal.t Interface.Create_fn(I)(O).t
+    val create : scale:int -> Scope.t -> Interface.Create_fn(I)(O).t
+    val hierarchy : scale:int -> Scope.t -> Interface.Create_fn(I)(O).t
   end
 end
 
