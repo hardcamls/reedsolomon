@@ -3,8 +3,9 @@
  (libraries
   core
   core_unix.command_unix
+  test_reedsolomon
   test_hardcaml_reedsolomon
   hardcaml_waveterm.interactive)
  (promote)
  (preprocess
-  (pps ppx_jane ppx_deriving_hardcaml)))
+  (pps ppx_jane)))

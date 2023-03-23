@@ -1,6 +1,6 @@
-(library 
+(library
  (name test_reedsolomon)
  (libraries expect_test_helpers_core reedsolomon core)
  (inline_tests)
- (preprocess (pps ppx_jane)))
-
+ (preprocess
+  (pps ppx_jane ppx_deriving_hardcaml)))

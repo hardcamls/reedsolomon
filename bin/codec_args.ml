@@ -1,12 +1,6 @@
 open Core
 
-let default_poly idx =
-  if idx < 2
-  then raise_s [%message "number of bits must be > 1"]
-  else
-    Array.foldi Reedsolomon.Galois.gf2_prim_polys.(idx) ~init:0 ~f:(fun idx acc b ->
-        acc + if b = 0 then 0 else b lsl idx)
-;;
+let default_poly = Reedsolomon.Galois.int_of_gf2_prim_poly
 
 let args =
   [%map_open.Command

@@ -19,6 +19,8 @@ module GF2N (G : GF2_extension_field_generator) : Ops.S with type t = int array
 (** list of primitive polys for GF(2); 3..24 *)
 val gf2_prim_polys : int array array
 
+val int_of_gf2_prim_poly : int -> int
+
 module type Table_generator = Galois_intf.Table_generator
 module type Table_ops = Galois_intf.Table_ops
 module type Table_params = Galois_intf.Table_params

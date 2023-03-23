@@ -3,84 +3,13 @@ open Core
 
 type params = Reedsolomon.Iter_codec.params [@@deriving sexp_of]
 
-module type Codec = sig
-  type t
+include struct
+  open Test_reedsolomon
 
-  val name : string
-  val init : params -> t
-  val decode : t -> int array -> int array
-  val encode : t -> int array -> int array
-end
+  module type Codec = Harness.Codec
 
-module Iter_codec : Codec = struct
-  include Reedsolomon.Iter_codec
-
-  let name = "iterative"
-
-  let encode t message =
-    let parity = Array.create ~len:((params t).t * 2) 0 in
-    encode t message parity;
-    Array.concat [ message; parity ]
-  ;;
-
-  let decode t errd =
-    let corrected = Array.create ~len:(params t).n 0 in
-    let _num_errors = decode t errd corrected in
-    corrected
-  ;;
-end
-
-module Poly_codec (Decoder : sig
-  val decoder : [ `euclid | `peterson | `berlekamp ]
-end) : Codec = struct
-  type t =
-    { rp : (module Reedsolomon.Poly_codec.Params)
-    ; g : (module Reedsolomon.Galois.Table_ops with type t = int)
-    ; params : params
-    }
-
-  let init (params : params) =
-    let module Rp = struct
-      let k = params.k
-      let t = params.t
-      let b = params.b
-    end
-    in
-    let module Gp = struct
-      let pp = params.prim_poly
-      let pe = params.prim_elt
-    end
-    in
-    let module G = Reedsolomon.Galois.Int_table_of_params (Gp) in
-    { rp = (module Rp); g = (module G); params }
-  ;;
-
-  let name =
-    match Decoder.decoder with
-    | `euclid -> "euclid"
-    | `peterson -> "peterson"
-    | `berlekamp -> "berlekamp"
-  ;;
-
-  let encode t (message : int array) =
-    let module Codec = Reedsolomon.Poly_codec.Make ((val t.g)) ((val t.rp)) in
-    let encoded = Codec.encode (Array.rev message) in
-    let encoded = Codec.R.slice encoded (t.params.n - 1) in
-    Array.rev encoded
-  ;;
-
-  let decode t (message : int array) =
-    let module Codec = Reedsolomon.Poly_codec.Make ((val t.g)) ((val t.rp)) in
-    let decoded =
-      (match Decoder.decoder with
-      | `euclid -> Codec.decode_euclid
-      | `peterson -> Codec.decode_peterson
-      | `berlekamp -> Codec.decode_berlekamp_massey)
-        (Array.rev message)
-    in
-    let decoded = Codec.R.slice decoded (t.params.n - 1) in
-    Array.rev decoded
-  ;;
+  module Iter_codec = Harness.Iter_codec
+  module Poly_codec = Harness.Poly_codec
 end
 
 let codec_selection =
