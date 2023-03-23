@@ -77,3 +77,11 @@ module type S = sig
   (** evaluate polynomial *)
   val eval : t -> elt -> elt
 end
+
+module type Poly = sig
+  module type S = S
+
+  (** Basic polynomial representations.  Coefficients are members of
+    Ops.OpsBase (which effectively provide '+' and '*') *)
+  module Make (E : Ops.S) : S with type t = E.t array and type elt = E.t
+end

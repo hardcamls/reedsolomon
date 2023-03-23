@@ -1,12 +1,12 @@
 open Core
 open Hardcaml
 
+module type S = Util_intf.S
+
 module Make (Standard : Reedsolomon.Standards.Standard) = struct
   module Sw = Standard
   module Hw = Hardcaml_reedsolomon.Codec.Make (Sw.Gp) (Sw.Rp)
   module Gfb = Hardcaml_reedsolomon.Galois.Make (Bits) (Sw.Gp)
-
-  module type Parallelism = Hardcaml_reedsolomon.Parallelism.S
 
   (* rs code params *)
   let k = Sw.Rp.k
@@ -72,4 +72,4 @@ module Make (Standard : Reedsolomon.Standards.Standard) = struct
   ;;
 end
 
-include Make (Reedsolomon.Standards.BBCTest)
+module Basic = Make (Reedsolomon.Standards.BBCTest)

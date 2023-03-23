@@ -27,3 +27,8 @@ struct
     val hierarchy : Scope.t -> Signal.t Interface.Create_fn(I)(O).t
   end
 end
+
+module type Berlekamp = sig
+  module Make (Gp : Reedsolomon.Galois.Table_params) (Rp : Reedsolomon.Poly_codec.Params) :
+    M(Gp)(Rp).S
+end

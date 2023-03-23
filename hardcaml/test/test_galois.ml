@@ -1,6 +1,6 @@
 open Core
 open Hardcaml
-open Util
+open Util.Basic
 module Gh = Gfb
 module Gs = Hw.Gfh.G
 

@@ -2,5 +2,7 @@
  (name test_reedsolomon)
  (libraries expect_test_helpers_core reedsolomon core)
  (inline_tests)
+ (flags
+  (:standard -w -67)) ; XXX only needed for CI task, not local builds??
  (preprocess
   (pps ppx_jane ppx_deriving_hardcaml)))

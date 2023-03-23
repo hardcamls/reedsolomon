@@ -2,9 +2,9 @@ open Base
 open Hardcaml
 
 module M
-  (Gp : Reedsolomon.Galois.Table_params)
-  (Rp : Reedsolomon.Poly_codec.Params)
-  (N : Parallelism.S) =
+    (Gp : Reedsolomon.Galois.Table_params)
+    (Rp : Reedsolomon.Poly_codec.Params)
+    (N : Parallelism.S) =
 struct
   module type S = sig
     module Serial : sig
@@ -56,4 +56,11 @@ struct
       val hierarchy : Scope.t -> Signal.t Interface.Create_fn(I)(O).t
     end
   end
+end
+
+module type Forney = sig
+  module Make
+      (Gp : Reedsolomon.Galois.Table_params)
+      (Rp : Reedsolomon.Poly_codec.Params)
+      (N : Parallelism.S) : M(Gp)(Rp)(N).S
 end

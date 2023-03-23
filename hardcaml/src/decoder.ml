@@ -1,11 +1,12 @@
 open Base
 open Hardcaml
 open Signal
+module M = Decoder_intf.M
 
 module Make
-  (Gp : Reedsolomon.Galois.Table_params)
-  (Rp : Reedsolomon.Poly_codec.Params)
-  (N : Parallelism.S) =
+    (Gp : Reedsolomon.Galois.Table_params)
+    (Rp : Reedsolomon.Poly_codec.Params)
+    (N : Parallelism.S) =
 struct
   module Gfh = Galois.Make (Signal) (Gp)
 
@@ -107,17 +108,17 @@ struct
     (* dont need array? *)
     let corrected =
       Array.init N.n ~f:(fun j ->
-        mux2 (reg fy.ferr.(j)) (fifo.q.(j) ^: reg fy.emag.(j)) fifo.q.(j))
+          mux2 (reg fy.ferr.(j)) (fifo.q.(j) ^: reg fy.emag.(j)) fifo.q.(j))
     in
     let ordy = reg fy.frdy.(0) in
     let error_count =
       reg_fb spec ~enable:(enable &: fifo_re) ~width:Gfh.bits ~f:(fun d ->
-        let sum =
-          reduce
-            ~f:( +: )
-            (Array.to_list (Array.map ~f:(fun x -> uresize x Gfh.bits) fy.ferr))
-        in
-        d +: sum)
+          let sum =
+            reduce
+              ~f:( +: )
+              (Array.to_list (Array.map ~f:(fun x -> uresize x Gfh.bits) fy.ferr))
+          in
+          d +: sum)
     in
     (* for now all submodule outputs *)
     { O_debug.syn; bm; ch; fy; corrected; ordy; error_count }

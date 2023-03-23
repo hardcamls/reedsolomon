@@ -6,8 +6,6 @@ module type S = sig
   module Hw : module type of Hardcaml_reedsolomon.Codec.Make (Sw.Gp) (Sw.Rp)
   module Gfb : module type of Hardcaml_reedsolomon.Galois.Make (Bits) (Sw.Gp)
 
-  module type Parallelism = Hardcaml_reedsolomon.Parallelism.S
-
   val k : int
   val t : int
   val b : int
@@ -30,4 +28,11 @@ module type S = sig
     :  ?waves:bool
     -> ('i, 'o) Hardcaml.Cyclesim.t
     -> Hardcaml_waveterm.Waveform.t option * ('i, 'o) Hardcaml.Cyclesim.t
+end
+
+module type Util = sig
+  module type S = S
+
+  module Make (Standard : Reedsolomon.Standards.Standard) : S
+  module Basic : S
 end

@@ -21,3 +21,10 @@ struct
     val create : Signal.t Interface.Create_fn(I)(O).t
   end
 end
+
+module type Encoder = sig
+  module M = M
+
+  module Make (Gp : Reedsolomon.Galois.Table_params) (Rp : Reedsolomon.Poly_codec.Params) :
+    M(Gp)(Rp).S
+end

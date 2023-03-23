@@ -1,7 +1,7 @@
 open Core
 open Hardcaml
 open Hardcaml_waveterm
-open Util
+open Util.Basic
 
 module Decoder = Hw.Decoder (struct
   let n = 1

@@ -2,7 +2,10 @@ open Core
 open Hardcaml
 open Hardcaml_waveterm
 
-module Test (Standard : Reedsolomon.Standards.Standard) (N : Util.Parallelism) = struct
+module Test
+    (Standard : Reedsolomon.Standards.Standard)
+    (N : Hardcaml_reedsolomon.Parallelism.S) =
+struct
   include Util.Make (Standard)
   module Decoder = Hw.Decoder (N)
   module Sim = Cyclesim.With_interface (Decoder.I) (Decoder.O)
@@ -13,21 +16,30 @@ module Test (Standard : Reedsolomon.Standards.Standard) (N : Util.Parallelism) =
     List.concat [ I.default (); O.default () ]
   ;;
 
-  let test ?waves () =
+  type t =
+    { sim : Sim.t
+    ; waves : Waveform.t option
+    ; i : Bits.t ref Decoder.I.t
+    ; o : Bits.t ref Decoder.O.t
+    }
+  [@@deriving fields]
+
+  let create_and_reset ?waves () =
     let sim = Sim.create (Decoder.create (Scope.create ~flatten_design:true ())) in
     let waves, sim = waveform_opt ?waves sim in
     let i = Cyclesim.inputs sim in
     let o = Cyclesim.outputs ~clock_edge:Before sim in
-    let codeword = codeword (message ()) in
-    let error = error 2 in
-    let received = codeword ^. error in
-    let cycles_per_codeword = (n + N.n - 1) / N.n in
-    let offset = (cycles_per_codeword * N.n) - n in
     Cyclesim.reset sim;
     i.enable := Bits.vdd;
     i.clocking.clear := Bits.vdd;
     Cyclesim.cycle sim;
     i.clocking.clear := Bits.gnd;
+    { sim; waves; i; o }
+  ;;
+
+  let simulate_codeword { sim; waves = _; i; o } received =
+    let cycles_per_codeword = (n + N.n - 1) / N.n in
+    let offset = (cycles_per_codeword * N.n) - n in
     let recv = Array.concat [ rev received; Array.init offset ~f:(fun _ -> 0) ] in
     (* load received data *)
     i.first := Bits.vdd;
@@ -55,13 +67,22 @@ module Test (Standard : Reedsolomon.Standards.Standard) (N : Util.Parallelism) =
     done;
     let corrected = Sw.R.R.slice corrected (n - 1) in
     Cyclesim.cycle sim;
+    corrected
+  ;;
+
+  let test_one_codeword ?waves () =
+    let sim = create_and_reset ?waves () in
+    let codeword = codeword (message ()) in
+    let error = error 2 in
+    let received = codeword ^. error in
+    let corrected = simulate_codeword sim received in
     if not ([%compare.equal: int array] corrected (rev codeword))
     then raise_s [%message (rev codeword : Sw.R.poly) (corrected : Sw.R.poly)];
-    waves
+    sim.waves
   ;;
 end
 
-let test ?waves parallelism =
+let test_one_codeword ?waves parallelism =
   let module Test =
     Test
       (Reedsolomon.Standards.BBCTest)
@@ -69,15 +90,15 @@ let test ?waves parallelism =
         let n = parallelism
       end)
   in
-  Test.test ?waves ()
+  Test.test_one_codeword ?waves ()
 ;;
 
 let%expect_test "parallelism 1 cycle/code word" =
-  ignore (test 1 : _ option);
+  ignore (test_one_codeword 1 : _ option);
   [%expect {||}]
 ;;
 
 let%expect_test "parallelism 2 cycles/code word" =
-  ignore (test 4 : _ option);
+  ignore (test_one_codeword 4 : _ option);
   [%expect {||}]
 ;;

@@ -32,3 +32,13 @@ module type Extended = sig
   val to_float : t -> float
   val of_string : string -> t
 end
+
+module type Ops = sig
+  module type S = S
+  module type Extended = Extended
+
+  module Int : Extended with type t = int
+  module Int32 : Extended with type t = int32
+  module Int64 : Extended with type t = int64
+  module Float : Extended with type t = float
+end

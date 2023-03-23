@@ -1,1 +1,1 @@
-module type S = Parallelism_intf.S
+include Parallelism_intf.Parallelism

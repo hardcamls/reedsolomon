@@ -1,4 +1,1 @@
-module Make
-  (Gp : Reedsolomon.Galois.Table_params)
-  (Rp : Reedsolomon.Poly_codec.Params)
-  (N : Parallelism.S) : Syndromes_intf.M(Gp)(Rp)(N).S
+include Syndromes_intf.Syndromes

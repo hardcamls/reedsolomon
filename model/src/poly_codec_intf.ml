@@ -57,3 +57,14 @@ module type S = sig
   (*val decode_errors_and_erasures_berlekamp_massey : poly -> int list -> poly*)
   val decode_errors_and_erasures : poly -> int list -> poly
 end
+
+module type Poly_codec = sig
+  (** Configuration of a Reed-Solomon code *)
+  module type Params = Params
+
+  (** RS encoding and decoding *)
+  module type S = S
+
+  (** Create a Reed-Solomon code based on the given Galois field and code parameters *)
+  module Make (G : Galois.Table_ops) (P : Params) : S with type elt = G.t
+end

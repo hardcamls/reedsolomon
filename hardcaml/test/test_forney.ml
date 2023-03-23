@@ -1,11 +1,11 @@
 open Core
 open Hardcaml
 open Hardcaml_waveterm
-open Util
+open Util.Basic
 
 (* XXX generalize this testbench. *)
 
-module Test (N : Parallelism) = struct
+module Test (N : Hardcaml_reedsolomon.Parallelism.S) = struct
   module Decoder = Hw.Decoder (N)
   module Forney = Decoder.Forney.Parallel
   module Sim = Cyclesim.With_interface (Forney.I) (Forney.O)

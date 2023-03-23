@@ -1,6 +1,7 @@
 open Base
 open Hardcaml
 open Signal
+module M = Encoder_intf.M
 
 module Make (Gp : Reedsolomon.Galois.Table_params) (Rp : Reedsolomon.Poly_codec.Params) =
 struct

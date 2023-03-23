@@ -48,3 +48,9 @@ module type S = sig
     val madd : int -> int -> int -> elt -> t
   end
 end
+
+module type Matrix = sig
+  module type S = S
+
+  module Make (Ops : Ops.S) : S with type elt = Ops.t
+end

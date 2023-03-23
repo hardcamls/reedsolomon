@@ -101,7 +101,9 @@ let command_decoder =
       in
       fun () ->
         Random.init seed;
-        let waves = Test_hardcaml_reedsolomon.Test_decoder.test ~waves parallelism in
+        let waves =
+          Test_hardcaml_reedsolomon.Test_decoder.test_one_codeword ~waves parallelism
+        in
         Option.iter waves ~f:Hardcaml_waveterm_interactive.run]
 ;;
 
