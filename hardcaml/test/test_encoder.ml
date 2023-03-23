@@ -25,7 +25,7 @@ module Test (Standard : Reedsolomon.Standards.Standard) = struct
     let sim = Sim.create Encoder.create in
     let waves, sim = waveform_opt ?waves sim in
     let i = Cyclesim.inputs sim in
-    let o = Cyclesim.outputs ~clock_edge:Before sim in
+    let o = Cyclesim.outputs sim in
     Cyclesim.reset sim;
     i.enable := Bits.vdd;
     i.clocking.clear := Bits.vdd;
