@@ -35,7 +35,7 @@ let test ?waves num_errors =
   i.clocking.clear := Bits.gnd;
   i.first := Bits.vdd;
   for j = 0 to (2 * t) - 1 do
-    i.syndromes.(j) := Bits.of_int ~width:sbits syndromes.(j)
+    i.syndromes.(j) := Bits.of_int ~width:m syndromes.(j)
   done;
   for j = 0 to 2 * t do
     if j = 2 * t then i.last := Bits.vdd;

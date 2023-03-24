@@ -69,13 +69,13 @@ module Test (N : Hardcaml_reedsolomon.Parallelism.S) = struct
     Cyclesim.cycle sim;
     i.clocking.clear := Bits.gnd;
     for j = 0 to Array.length v - 1 do
-      i.v.(j) := Bits.of_int ~width:sbits v.(j)
+      i.v.(j) := Bits.of_int ~width:m v.(j)
     done;
     for j = 0 to Array.length l' - 1 do
-      i.l.(j) := Bits.of_int ~width:sbits l'.(j)
+      i.l.(j) := Bits.of_int ~width:m l'.(j)
     done;
     for j = 0 to Array.length ch - 1 do
-      i.x.(0) := Bits.of_int ~width:sbits ch.(j);
+      i.x.(0) := Bits.of_int ~width:m ch.(j);
       Cyclesim.cycle sim
     done;
     (* some flush cycles *)

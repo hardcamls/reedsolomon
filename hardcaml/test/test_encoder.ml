@@ -37,13 +37,13 @@ module Test (Standard : Reedsolomon.Standards.Standard) = struct
   let simulate_message { sim; waves = _; i; o } data =
     (* load data *)
     i.ctrl := Bits.gnd;
-    for j = 0 to Sw.Rp.k - 1 do
-      i.d := Bits.of_int ~width:4 data.(Sw.Rp.k - j - 1);
+    for j = 0 to k - 1 do
+      i.d := Bits.of_int ~width:m data.(k - j - 1);
       Cyclesim.cycle sim
     done;
     (* read parity *)
     i.ctrl := Bits.vdd;
-    Array.init (Sw.Rp.t * 2) ~f:(fun _ ->
+    Array.init (t * 2) ~f:(fun _ ->
         let r = Bits.to_int !(o.q) in
         Cyclesim.cycle sim;
         r)

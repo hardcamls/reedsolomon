@@ -10,8 +10,8 @@ module type S = sig
   val t : int
   val b : int
   val n : int
+  val m : int
   val n_elems : int
-  val sbits : int
   val message : unit -> Sw.R.poly
   val rev : Sw.R.poly -> Sw.R.poly
   val ( ^. ) : Sw.R.poly -> Sw.R.poly -> Sw.R.poly

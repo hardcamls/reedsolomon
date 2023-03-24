@@ -4,36 +4,15 @@ open Core
 type params = Reedsolomon.Iter_codec.params [@@deriving sexp_of]
 
 include struct
-  open Test_reedsolomon
+  open Test_reedsolomon.Harness
 
-  module type Codec = Harness.Codec
+  module type Codec = Codec
 
-  module Iter_codec = Harness.Iter_codec
-  module Poly_codec = Harness.Poly_codec
+  module Iter_codec = Iter_codec
+  module Poly_codec = Poly_codec
+
+  let codec_selection = codec_selection
 end
-
-let codec_selection =
-  [ (let module Codec =
-       Poly_codec (struct
-         let decoder = `peterson
-       end)
-     in
-    (module Codec : Codec))
-  ; (let module Codec =
-       Poly_codec (struct
-         let decoder = `euclid
-       end)
-     in
-    (module Codec : Codec))
-  ; (let module Codec =
-       Poly_codec (struct
-         let decoder = `berlekamp
-       end)
-     in
-    (module Codec : Codec))
-  ; (module Iter_codec : Codec)
-  ]
-;;
 
 let find_codec name =
   match

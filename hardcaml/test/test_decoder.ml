@@ -46,7 +46,7 @@ struct
     i.load := Bits.vdd;
     for j = 0 to cycles_per_codeword - 1 do
       for k = 0 to N.n - 1 do
-        i.x.(k) := Bits.of_int ~width:sbits recv.((j * N.n) + k)
+        i.x.(k) := Bits.of_int ~width:m recv.((j * N.n) + k)
       done;
       if j = cycles_per_codeword - 1 then i.last := Bits.vdd;
       Cyclesim.cycle sim;

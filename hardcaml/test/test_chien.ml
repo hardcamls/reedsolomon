@@ -35,7 +35,7 @@ module Test (N : Hardcaml_reedsolomon.Parallelism.S) = struct
     i.clocking.clear := Bits.gnd;
     i.start := Bits.vdd;
     for j = 0 to Array.length l - 1 do
-      i.lambda.(j) := Bits.of_int ~width:sbits l.(j)
+      i.lambda.(j) := Bits.of_int ~width:m l.(j)
     done;
     let results = ref [] in
     for _ = 0 to ((n_elems + N.n) / N.n) - 1 do

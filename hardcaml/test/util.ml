@@ -13,12 +13,10 @@ module Make (Standard : Reedsolomon.Standards.Standard) = struct
   let t = Sw.Rp.t
   let b = Sw.Rp.b
   let n = k + t + t
+  let m = Int.ceil_log2 (n + 1)
 
   (* number of field elements *)
   let n_elems = Sw.G.n_elems
-
-  (* number of bits per symbol *)
-  let sbits = Int.ceil_log2 n_elems
 
   (* create a random message *)
   let message () = Array.init k ~f:(fun _ -> Random.int n_elems)

@@ -2,28 +2,23 @@ open Core
 module Harness = Test_reedsolomon.Harness
 
 module Encode_file = struct
-  let encoder (params : Reedsolomon.Iter_codec.params) =
-    let encoder = Harness.Iter_codec.init params in
-    Harness.Iter_codec.encode encoder
+  let encoder ~simulate (params : Reedsolomon.Iter_codec.params) =
+    if simulate
+    then
+      let module Codec =
+        Test_hardcaml_reedsolomon.Harness.Hardware_codec (struct
+          let n = 1
+        end)
+      in
+      let encoder = Codec.init params in
+      Codec.encode encoder
+    else
+      let module Codec = Harness.Iter_codec in
+      let encoder = Codec.init params in
+      Codec.encode encoder
   ;;
 
-  (* 
- {v
-    let module Gp = struct
-      let pp = prim_poly
-      let pe = prim_elt
-    end
-    in
-    let module Rp = struct
-      let k = k
-      let t = t
-      let b = b
-    end
-    in
-    let module Standard = Reedsolomon.Standards.Make (Gp) (Rp) in
- v}  
-*)
-  let run (params : Reedsolomon.Iter_codec.params) in_file out_file =
+  let run (params : Reedsolomon.Iter_codec.params) ~simulate in_file out_file =
     let in_file = In_channel.create in_file in
     let out_file = Out_channel.create out_file in
     let total_length_in_bytes =
@@ -38,7 +33,7 @@ module Encode_file = struct
         ~params
         (Harness.Io_buffers.create ~get_byte ~put_byte)
         ~total_length_in_bytes
-        ~encoder:(encoder params)
+        ~encoder:(encoder ~simulate params)
     in
     Harness.Encode.encode harness;
     In_channel.close in_file;
@@ -49,20 +44,36 @@ module Encode_file = struct
     Command.basic
       ~summary:"RS encode a file"
       [%map_open.Command
-        let args = Codec_args.args
+        let params = Codec_args.args
+        and simulate =
+          flag
+            "-simulate"
+            no_arg
+            ~doc:"Run in simulation mode.  By default use the iterative codec."
         and in_file = anon ("IN_FILE" %: string)
         and out_file = anon ("OUT_FILE" %: string) in
-        fun () -> run args in_file out_file]
+        fun () -> run params ~simulate in_file out_file]
   ;;
 end
 
 module Decode_file = struct
-  let decoder params =
-    let decoder = Harness.Iter_codec.init params in
-    Harness.Iter_codec.decode decoder
+  let decoder ~simulate ~parallelism params =
+    if simulate
+    then
+      let module Codec =
+        Test_hardcaml_reedsolomon.Harness.Hardware_codec (struct
+          let n = parallelism
+        end)
+      in
+      let decoder = Codec.init params in
+      Codec.decode decoder
+    else
+      let module Codec = Harness.Iter_codec in
+      let decoder = Codec.init params in
+      Codec.decode decoder
   ;;
 
-  let run _parallelism in_file out_file =
+  let run ~simulate ~parallelism in_file out_file =
     let in_file = In_channel.create in_file in
     let out_file = Out_channel.create out_file in
     let get_byte () =
@@ -70,7 +81,9 @@ module Decode_file = struct
     in
     let put_byte c = Out_channel.output_byte out_file (Char.to_int c) in
     let harness =
-      Harness.Decode.create (Harness.Io_buffers.create ~get_byte ~put_byte) ~decoder
+      Harness.Decode.create
+        (Harness.Io_buffers.create ~get_byte ~put_byte)
+        ~decoder:(decoder ~simulate ~parallelism)
     in
     Harness.Decode.decode harness;
     In_channel.close in_file;
@@ -86,9 +99,14 @@ module Decode_file = struct
             "-parallelism"
             (optional_with_default 1 int)
             ~doc:"PARALLISM code word parallelism"
+        and simulate =
+          flag
+            "-simulate"
+            no_arg
+            ~doc:"Run in simulation mode.  By default use the iterative codec."
         and in_file = anon ("IN_FILE" %: string)
         and out_file = anon ("OUT_FILE" %: string) in
-        fun () -> run parallelism in_file out_file]
+        fun () -> run ~simulate ~parallelism in_file out_file]
   ;;
 end
 

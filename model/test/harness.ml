@@ -83,6 +83,29 @@ end) : Codec = struct
   ;;
 end
 
+let codec_selection =
+  [ (let module Codec =
+       Poly_codec (struct
+         let decoder = `peterson
+       end)
+     in
+    (module Codec : Codec))
+  ; (let module Codec =
+       Poly_codec (struct
+         let decoder = `euclid
+       end)
+     in
+    (module Codec : Codec))
+  ; (let module Codec =
+       Poly_codec (struct
+         let decoder = `berlekamp
+       end)
+     in
+    (module Codec : Codec))
+  ; (module Iter_codec : Codec)
+  ]
+;;
+
 let params m t =
   let n = (1 lsl m) - 1 in
   let k = n - (2 * t) in

@@ -1,5 +1,9 @@
 open Base
 
+(** {2 Unified CODEC API}
+
+   Select between one of the abstract polynomial CODECs or the faster iterative CODEC. *)
+
 type params = Reedsolomon.Iter_codec.params
 
 module type Codec = sig
@@ -22,6 +26,10 @@ module Io_buffers : sig
 
   val create : get_byte:(unit -> Char.t) -> put_byte:(Char.t -> unit) -> t
 end
+
+val codec_selection : (module Codec) list
+
+(** {2 Steaming CODEC API. }*)
 
 module Encode : sig
   type t
