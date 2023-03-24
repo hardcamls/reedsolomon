@@ -70,19 +70,28 @@ struct
     corrected
   ;;
 
-  let test_one_codeword ?waves () =
+  let test_one_codeword ?(verbose = false) ?waves () =
     let sim = create_and_reset ?waves () in
     let codeword = codeword (message ()) in
     let error = error 2 in
     let received = codeword ^. error in
     let corrected = simulate_codeword sim received in
-    if not ([%compare.equal: int array] corrected (rev codeword))
-    then raise_s [%message (rev codeword : Sw.R.poly) (corrected : Sw.R.poly)];
+    let msg () =
+      [%message
+        (codeword : int array)
+          (error : int array)
+          (received : int array)
+          (corrected : int array)]
+    in
+    if verbose
+    then print_s (msg ())
+    else if not ([%compare.equal: int array] corrected (rev codeword))
+    then raise_s (msg ());
     sim.waves
   ;;
 end
 
-let test_one_codeword ?waves parallelism =
+let test_one_codeword ?verbose ?waves parallelism =
   let module Test =
     Test
       (Reedsolomon.Standards.BBCTest)
@@ -90,7 +99,7 @@ let test_one_codeword ?waves parallelism =
         let n = parallelism
       end)
   in
-  Test.test_one_codeword ?waves ()
+  Test.test_one_codeword ?verbose ?waves ()
 ;;
 
 let%expect_test "parallelism 1 cycle/code word" =

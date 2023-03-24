@@ -87,12 +87,13 @@ let command_berlekamp =
         Option.iter waves ~f:Hardcaml_waveterm_interactive.run]
 ;;
 
-let command_decoder =
+let _command_decoder =
   Command.basic
     ~summary:"Test reed-solomon decoder"
     [%map_open.Command
-      let seed = flag "-seed" (optional_with_default 1 int) ~doc:"SEED random seed"
+      let seed = flag "-seed" (optional int) ~doc:"SEED random seed"
       and waves = flag "-waves" no_arg ~doc:"Show waveform"
+      and verbose = flag "-verbose" no_arg ~doc:"Print codewords"
       and parallelism =
         flag
           "-parallelism"
@@ -100,9 +101,39 @@ let command_decoder =
           ~doc:"PARALLELISM Code word parallelism - symbols processed per cycle"
       in
       fun () ->
-        Random.init seed;
+        Option.iter seed ~f:Random.init;
         let waves =
-          Test_hardcaml_reedsolomon.Test_decoder.test_one_codeword ~waves parallelism
+          Test_hardcaml_reedsolomon.Test_decoder.test_one_codeword
+            ~verbose
+            ~waves
+            parallelism
+        in
+        Option.iter waves ~f:Hardcaml_waveterm_interactive.run]
+;;
+
+let command_decoder =
+  Command.basic
+    ~summary:"Test reed-solomon decoder"
+    [%map_open.Command
+      let args = Codec_args.args
+      and seed = flag "-seed" (optional int) ~doc:"SEED random seed"
+      and waves = flag "-waves" no_arg ~doc:"Show waveform"
+      and verbose = flag "-verbose" no_arg ~doc:"Print codewords"
+      and parallelism =
+        flag
+          "-parallelism"
+          (optional_with_default 1 int)
+          ~doc:"PARALLELISM Code word parallelism - symbols processed per cycle"
+      in
+      fun () ->
+        Option.iter seed ~f:Random.init;
+        let module Harness = Test_hardcaml_reedsolomon.Harness in
+        let module Util = Test_hardcaml_reedsolomon.Util in
+        let waves =
+          Test_hardcaml_reedsolomon.Test_decoder.test_one_codeword
+            ~verbose
+            ~waves
+            parallelism
         in
         Option.iter waves ~f:Hardcaml_waveterm_interactive.run]
 ;;

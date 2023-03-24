@@ -8,6 +8,7 @@ module Encode_file = struct
       let module Codec =
         Test_hardcaml_reedsolomon.Harness.Hardware_codec (struct
           let n = 1
+          let waves = false
         end)
       in
       let encoder = Codec.init params in
@@ -63,6 +64,7 @@ module Decode_file = struct
       let module Codec =
         Test_hardcaml_reedsolomon.Harness.Hardware_codec (struct
           let n = parallelism
+          let waves = false
         end)
       in
       let decoder = Codec.init params in
