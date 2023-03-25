@@ -8,11 +8,11 @@ module Test
 struct
   include Util.Make (Standard)
   module Decoder = Hw.Decoder (N)
-  module Sim = Cyclesim.With_interface (Decoder.I) (Decoder.O)
+  module Sim = Cyclesim.With_interface (Decoder.I) (Decoder.O_debug)
 
   let display_rules =
     let module I = Display_rules.With_interface (Decoder.I) in
-    let module O = Display_rules.With_interface (Decoder.O) in
+    let module O = Display_rules.With_interface (Decoder.O_debug) in
     List.concat [ I.default (); O.default () ]
   ;;
 
@@ -20,12 +20,17 @@ struct
     { sim : Sim.t
     ; waves : Waveform.t option
     ; i : Bits.t ref Decoder.I.t
-    ; o : Bits.t ref Decoder.O.t
+    ; o : Bits.t ref Decoder.O_debug.t
     }
   [@@deriving fields]
 
   let create_and_reset ?waves () =
-    let sim = Sim.create (Decoder.create (Scope.create ~flatten_design:true ())) in
+    let sim =
+      Sim.create
+        ?config:(Option.map waves ~f:(Fn.const Cyclesim.Config.trace_all))
+        (Decoder.create_with_debug
+           (Scope.create ~flatten_design:true ~auto_label_hierarchical_ports:true ()))
+    in
     let waves, sim = waveform_opt ?waves sim in
     let i = Cyclesim.inputs sim in
     let o = Cyclesim.outputs ~clock_edge:Before sim in

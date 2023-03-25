@@ -8,3 +8,6 @@ end) : sig
   val encoder_waves : t -> Hardcaml_waveterm.Waveform.t option
   val decoder_waves : t -> Hardcaml_waveterm.Waveform.t option
 end
+
+val test_bad_decode : ?waves:bool -> unit -> Hardcaml_waveterm.Waveform.t option
+val test_bad_syndromes : ?waves:bool -> unit -> Hardcaml_waveterm.Waveform.t option

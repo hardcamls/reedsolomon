@@ -40,5 +40,8 @@ jobs:
       - name: Model regression test
         run: opam exec -- dune exec ./bin/rs.exe -- model regression -num-tests 1000
       
+      - name: Simulate regression test
+        run: test/simulate.sh
+
       - name: Check repo is clean
         run: git diff --exit-code

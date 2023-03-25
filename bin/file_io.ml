@@ -68,7 +68,10 @@ module Decode_file = struct
         end)
       in
       let decoder = Codec.init params in
-      Codec.decode decoder
+      fun x ->
+        (* XXX figure out the data order among the various codecs.
+           This is getting annoying. *)
+        Codec.decode decoder (Array.rev x) |> Array.rev
     else
       let module Codec = Harness.Iter_codec in
       let decoder = Codec.init params in

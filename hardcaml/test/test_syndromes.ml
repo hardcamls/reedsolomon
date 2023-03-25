@@ -1,9 +1,12 @@
 open Core
 open Hardcaml
 open Hardcaml_waveterm
-open Util.Basic
 
-module Test (N : Hardcaml_reedsolomon.Parallelism.S) = struct
+module Test
+    (Standard : Reedsolomon.Standards.Standard)
+    (N : Hardcaml_reedsolomon.Parallelism.S) =
+struct
+  include Util.Make (Standard)
   module Decoder = Hw.Decoder (N)
   module Syndromes = Decoder.Syndromes
   module Sim = Cyclesim.With_interface (Syndromes.I) (Syndromes.O)
@@ -17,17 +20,13 @@ module Test (N : Hardcaml_reedsolomon.Parallelism.S) = struct
   let cycles_per_codeword = (n + N.n - 1) / N.n
   let offset = (cycles_per_codeword * N.n) - n
 
-  let test ?waves () =
+  let test_codeword ?(verbose = false) ?waves received =
     let sim =
       Sim.create (Syndromes.create ~scale:offset (Scope.create ~flatten_design:true ()))
     in
     let waves, sim = waveform_opt ?waves sim in
     let i = Cyclesim.inputs sim in
     let o = Cyclesim.outputs sim in
-    (* test data *)
-    let codeword = codeword (message ()) in
-    let error = error 2 in
-    let received = codeword ^. error in
     (* reset, clear, enable *)
     Cyclesim.reset sim;
     i.enable := Bits.vdd;
@@ -53,20 +52,32 @@ module Test (N : Hardcaml_reedsolomon.Parallelism.S) = struct
     (* compare *)
     let syndromes_sw = syndromes received in
     let syndromes_tb = Array.map ~f:(fun x -> Bits.to_int !x) o.syndromes in
-    if not ([%compare.equal: int array] syndromes_sw syndromes_tb)
-    then
-      raise_s
-        [%message
-          (received : Sw.R.poly) (syndromes_sw : Sw.R.poly) (syndromes_tb : Sw.R.poly)];
+    let msg () =
+      [%message
+        (received : Sw.R.poly) (syndromes_sw : Sw.R.poly) (syndromes_tb : Sw.R.poly)]
+    in
+    if verbose
+    then print_s (msg ())
+    else if not ([%compare.equal: int array] syndromes_sw syndromes_tb)
+    then raise_s (msg ());
     waves
+  ;;
+
+  let test ?waves () =
+    let codeword = codeword (message ()) in
+    let error = error 2 in
+    let received = codeword ^. error in
+    test_codeword ?waves received
   ;;
 end
 
 let test ?waves parallelism =
   let module Test =
-    Test (struct
-      let n = parallelism
-    end)
+    Test
+      (Reedsolomon.Standards.BBCTest)
+      (struct
+        let n = parallelism
+      end)
   in
   Test.test ?waves ()
 ;;

@@ -169,6 +169,32 @@ let command_decoder =
         Option.iter (Codec.decoder_waves codec) ~f:Hardcaml_waveterm_interactive.run]
 ;;
 
+let command_test_bad_decode =
+  Command.basic
+    ~summary:"An example we need to debug"
+    [%map_open.Command
+      let () = return () in
+      fun () ->
+        let waves = Test_hardcaml_reedsolomon.Harness.test_bad_decode ~waves:true () in
+        Option.iter waves ~f:Hardcaml_waveterm_interactive.run]
+;;
+
+let command_test_bad_syndromes =
+  Command.basic
+    ~summary:"Syndromes of bad example"
+    [%map_open.Command
+      let () = return () in
+      fun () ->
+        let waves = Test_hardcaml_reedsolomon.Harness.test_bad_syndromes ~waves:true () in
+        Option.iter waves ~f:Hardcaml_waveterm_interactive.run]
+;;
+
+let command_debug =
+  Command.group
+    ~summary:"Bad decoding"
+    [ "decode", command_test_bad_decode; "syndromes", command_test_bad_syndromes ]
+;;
+
 let command =
   Command.group
     ~summary:"RS codec simulation testbenches"
@@ -178,5 +204,6 @@ let command =
     ; "chien-search", command_chien
     ; "berlekamp", command_berlekamp
     ; "forney", command_forney
+    ; "debug", command_debug
     ]
 ;;
