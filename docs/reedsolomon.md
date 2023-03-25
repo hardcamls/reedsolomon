@@ -15,8 +15,7 @@ We start with the message we wish to send (or store).  The message is of
 length `k` and comprised of `m` bit symbols.  To this the Reed-Solomon encoder 
 will add `2*t` parity protection symbols to form a code word of length `n`.
 
-![Alt text](./encoder.svg) 
-<img src="./encoder.svg">
+![Encoder diagram](./encoder.svg) 
 
 Reed-Solomon codes are systematic - that is the original message is contained 
 within the computed codeword.
