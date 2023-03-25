@@ -19,3 +19,4 @@ val init : params -> t
 val params : t -> params
 val encode : t -> poly -> poly -> unit
 val decode : t -> poly -> poly -> int
+val to_standard : params -> (module Standards.Standard)

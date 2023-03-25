@@ -15,21 +15,8 @@ struct
 
   let name = "hardware"
 
-  let init
-      ({ n = _; m = _; k; t; b; prim_poly; prim_elt } : Reedsolomon.Iter_codec.params)
-    =
-    let module Gp = struct
-      let pp = prim_poly
-      let pe = prim_elt
-    end
-    in
-    let module Rp = struct
-      let k = k
-      let t = t
-      let b = b
-    end
-    in
-    let module Standard = Reedsolomon.Standards.Make (Gp) (Rp) in
+  let init params =
+    let module Standard = (val Reedsolomon.Iter_codec.to_standard params) in
     let module Encoder = Test_encoder.Test (Standard) in
     let module Decoder = Test_decoder.Test (Standard) (Config) in
     let encoder = lazy (Encoder.create_and_reset ~waves:Config.waves ()) in

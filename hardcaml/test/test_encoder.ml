@@ -7,12 +7,6 @@ module Test (Standard : Reedsolomon.Standards.Standard) = struct
   module Encoder = Hw.Encoder
   module Sim = Cyclesim.With_interface (Encoder.I) (Encoder.O)
 
-  let display_rules =
-    let module I = Display_rules.With_interface (Encoder.I) in
-    let module O = Display_rules.With_interface (Encoder.O) in
-    List.concat [ I.default (); O.default () ]
-  ;;
-
   type t =
     { sim : Sim.t
     ; waves : Waveform.t option

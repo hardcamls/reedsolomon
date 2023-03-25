@@ -4,8 +4,10 @@ let command_encoder =
   Command.basic
     ~summary:"Test encoder"
     [%map_open.Command
-      let seed = flag "-seed" (optional_with_default 1 int) ~doc:"SEED random seed"
+      let params = Codec_args.args
+      and seed = flag "-seed" (optional_with_default 1 int) ~doc:"SEED random seed"
       and waves = flag "-waves" no_arg ~doc:"Show waveform"
+      and verbose = flag "-verbose" no_arg ~doc:"Print messages"
       and num_tests =
         flag
           "-num-tests"
@@ -14,8 +16,32 @@ let command_encoder =
       in
       fun () ->
         Random.init seed;
-        let waves = Test_hardcaml_reedsolomon.Test_encoder.test ~waves num_tests in
-        Option.iter waves ~f:Hardcaml_waveterm_interactive.run]
+        let module Harness = Test_hardcaml_reedsolomon.Harness in
+        let module Util =
+          Test_hardcaml_reedsolomon.Util.Make
+            ((val Reedsolomon.Iter_codec.to_standard params))
+        in
+        let module Codec =
+          Harness.Hardware_codec (struct
+            let n = 1
+            let waves = waves
+          end)
+        in
+        let codec = Codec.init params in
+        for _ = 1 to num_tests do
+          let message = Util.message () in
+          let codeword_tb = Codec.encode codec message in
+          let codeword_sw = Util.codeword (Array.rev message) |> Array.rev in
+          let msg () =
+            [%message
+              (message : int array) (codeword_tb : int array) (codeword_sw : int array)]
+          in
+          if verbose
+          then print_s (msg ())
+          else if not ([%compare.equal: int array] codeword_tb codeword_sw)
+          then raise_s (msg ())
+        done;
+        Option.iter (Codec.encoder_waves codec) ~f:Hardcaml_waveterm_interactive.run]
 ;;
 
 let command_syndromes =
@@ -87,55 +113,60 @@ let command_berlekamp =
         Option.iter waves ~f:Hardcaml_waveterm_interactive.run]
 ;;
 
-let _command_decoder =
-  Command.basic
-    ~summary:"Test reed-solomon decoder"
-    [%map_open.Command
-      let seed = flag "-seed" (optional int) ~doc:"SEED random seed"
-      and waves = flag "-waves" no_arg ~doc:"Show waveform"
-      and verbose = flag "-verbose" no_arg ~doc:"Print codewords"
-      and parallelism =
-        flag
-          "-parallelism"
-          (optional_with_default 1 int)
-          ~doc:"PARALLELISM Code word parallelism - symbols processed per cycle"
-      in
-      fun () ->
-        Option.iter seed ~f:Random.init;
-        let waves =
-          Test_hardcaml_reedsolomon.Test_decoder.test_one_codeword
-            ~verbose
-            ~waves
-            parallelism
-        in
-        Option.iter waves ~f:Hardcaml_waveterm_interactive.run]
-;;
-
 let command_decoder =
   Command.basic
     ~summary:"Test reed-solomon decoder"
     [%map_open.Command
-      let args = Codec_args.args
+      let params = Codec_args.args
       and seed = flag "-seed" (optional int) ~doc:"SEED random seed"
       and waves = flag "-waves" no_arg ~doc:"Show waveform"
       and verbose = flag "-verbose" no_arg ~doc:"Print codewords"
+      and errors =
+        flag "-errors" (optional int) ~doc:"Number of errors to insert (default t)"
       and parallelism =
         flag
           "-parallelism"
           (optional_with_default 1 int)
           ~doc:"PARALLELISM Code word parallelism - symbols processed per cycle"
+      and num_tests =
+        flag
+          "-num-tests"
+          (optional_with_default 1 int)
+          ~doc:"COUNT Number of tests to run"
       in
       fun () ->
         Option.iter seed ~f:Random.init;
         let module Harness = Test_hardcaml_reedsolomon.Harness in
-        let module Util = Test_hardcaml_reedsolomon.Util in
-        let waves =
-          Test_hardcaml_reedsolomon.Test_decoder.test_one_codeword
-            ~verbose
-            ~waves
-            parallelism
+        let module Util =
+          Test_hardcaml_reedsolomon.Util.Make
+            ((val Reedsolomon.Iter_codec.to_standard params))
         in
-        Option.iter waves ~f:Hardcaml_waveterm_interactive.run]
+        let module Codec =
+          Harness.Hardware_codec (struct
+            let n = parallelism
+            let waves = waves
+          end)
+        in
+        let codec = Codec.init params in
+        for _ = 1 to num_tests do
+          let message = Util.message () in
+          let codeword = Util.codeword message in
+          let error = Util.error (Option.value ~default:params.t errors) in
+          let received = Util.( ^. ) codeword error in
+          let decoded = Codec.decode codec received in
+          let msg () =
+            [%message
+              (codeword : int array)
+                (error : int array)
+                (received : int array)
+                (decoded : int array)]
+          in
+          if verbose
+          then print_s (msg ())
+          else if not ([%compare.equal: int array] codeword decoded)
+          then raise_s (msg ())
+        done;
+        Option.iter (Codec.decoder_waves codec) ~f:Hardcaml_waveterm_interactive.run]
 ;;
 
 let command =

@@ -232,3 +232,19 @@ let init p =
 let encode t = t.encode
 let decode t = t.decode
 let params t = t.params
+
+let to_standard { n = _; k; t; m = _; b; prim_poly; prim_elt } =
+  let module Gp = struct
+    let pp = prim_poly
+    let pe = prim_elt
+  end
+  in
+  let module Rp = struct
+    let k = k
+    let t = t
+    let b = b
+  end
+  in
+  let module Standard = Standards.Make (Gp) (Rp) in
+  (module Standard : Standards.Standard)
+;;
