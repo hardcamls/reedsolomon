@@ -2,20 +2,28 @@
 
 ## Introduction
 
-Reed-Solomon is a forward error correction CODEC.  Forward error correction provides a way to protect data
-from errors incurred during transmission or storage - an inevitability in our imperfect world.  We will 
-introduce the main concepts of Reed-Solomon coding but for a much more thorough discussion please refer
-to this rather execellent [BBC white paper](https://downloads.bbc.co.uk/rd/pubs/whp/whp-pdf-files/WHP031.pdf).
+Reed-Solomon is a forward error correction CODEC.  Forward error correction 
+provides a way to protect data from errors incurred during transmission or 
+storage - an inevitability in our imperfect world.  We will introduce the 
+main concepts of Reed-Solomon coding but for a much more thorough discussion 
+please refer to this rather execellent 
+[BBC white paper](https://downloads.bbc.co.uk/rd/pubs/whp/whp-pdf-files/WHP031.pdf).
 
 ## Block structure
 
-We start with the message we wish to send (or store).  The message is of length `k` and comprised of `m` bit symbols. 
-To this the Reed-Solomon encoder will add `2*t` parity protection symbols to form a code word of length `n`.
+We start with the message we wish to send (or store).  The message is of 
+length `k` and comprised of `m` bit symbols.  To this the Reed-Solomon encoder 
+will add `2*t` parity protection symbols to form a code word of length `n`.
 
-> block diagram here
+> block diagram hereusing a base galois field with order 
+![Alt text](./encoder.svg) <img src="./encoder.svg">
 
-The decoder will receive the code word which may have been corrupted.  If the number of errors is less than
-some threshold it will recover the original message intact.
+Reed-Solomon codes are systematic - that is the original message is contained 
+within the computed codeword.
+
+The decoder will receive the code word which may have been corrupted.  If the 
+number of errors is less than some threshold it will recover the original 
+message intact.
 
 ## Parameter relationships
 

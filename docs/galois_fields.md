@@ -86,7 +86,7 @@ Not a power (zero element)
 This way of expressing field elements will allow us to optimise the multiplication and division
 operations:
 
-$$$ a * b = pe^i * pe^j = pe^(i+j)$$$
+$$a * b = pe^i * pe^j = pe^(i+j)$$
 
 ## Extension fields
 
@@ -122,8 +122,8 @@ module GF3_2 :
 Here we have defined an extension field of degree 2 over the primitive field modulo 3 
 containing $3^2 = 9$ elements.
 
-The elements of this field are are polynomials with coefficients modulo 3, where the polynomial itself
-is modulo the so called irreducible polynomial (called `pp` above).
+The elements of this field are polynomials with coefficients modulo 3, where the polynomial itself
+is modulo the so called irreducible polynomial ($x^2 + 2x + 2$ and called `pp` above).
 
 The polynomial $x$ is a primitive element of this field and we can use it to generate all non-zero
 elements.
@@ -146,14 +146,14 @@ x
 
 ## Practical extension fields
 
-All the extension fields we will consider using a base galois field with order 
-$GF(2^n)$.  This is very conventient bacause:
+All the extension fields we will consider will have the form $GF(2^n)$.  This 
+is very conventient bacause:
 
 1. The base field of order 2 can be represented with a single bit (0 or 1).
-2. Operations on the base field just become simple xor/and
-3. Polymonials over the field can be represented as simple integer types.
+2. Operations on the base field just become simple xor/and.
+3. Polymonials over the field can be represented as simple integer valeus.
 
-For example, $GF(2^8)$ (also writtem as $GF(256)$) has field elements which can 
+For example, $GF(2^8)$ (also writtem as $GF(256)$ ) has field elements which can 
 be represented by a single 8 bit char type.
 
 The galois module offers an optimised implementation of such fields.
