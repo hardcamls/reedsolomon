@@ -45,7 +45,7 @@ struct
   let simulate_codeword { sim; waves = _; i; o } received =
     let cycles_per_codeword = (n + N.n - 1) / N.n in
     let offset = (cycles_per_codeword * N.n) - n in
-    let recv = Array.concat [ rev received; Array.init offset ~f:(fun _ -> 0) ] in
+    let recv = Array.concat [ received; Array.init offset ~f:(fun _ -> 0) ] in
     (* load received data *)
     i.first := Bits.vdd;
     i.load := Bits.vdd;
@@ -75,11 +75,9 @@ struct
     corrected
   ;;
 
-  let simulate_codeword_in_not_crazy_order t r = simulate_codeword t (Array.rev r)
-
   let test_one_codeword ?(verbose = false) ?waves () =
     let sim = create_and_reset ?waves () in
-    let codeword = codeword (message ()) in
+    let codeword = Array.rev (codeword (Array.rev (message ()))) in
     let error = error 2 in
     let received = codeword ^. error in
     let corrected = simulate_codeword sim received in
@@ -92,7 +90,7 @@ struct
     in
     if verbose
     then print_s (msg ())
-    else if not ([%compare.equal: int array] corrected (rev codeword))
+    else if not ([%compare.equal: int array] corrected codeword)
     then raise_s (msg ());
     sim.waves
   ;;
@@ -111,10 +109,10 @@ let test_one_codeword ?verbose ?waves parallelism =
 
 let%expect_test "parallelism 1 cycle/code word" =
   ignore (test_one_codeword 1 : _ option);
-  [%expect {||}]
+  [%expect{||}]
 ;;
 
 let%expect_test "parallelism 2 cycles/code word" =
   ignore (test_one_codeword 4 : _ option);
-  [%expect {||}]
+  [%expect{||}]
 ;;

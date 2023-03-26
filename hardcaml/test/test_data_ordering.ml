@@ -74,7 +74,7 @@ let%expect_test "hardware codec - the encoder testbench reverses the input messa
   let module Encoder = Test_encoder.Test (Standard) in
   let codeword_poly = Poly.encode message in
   let t = Encoder.create_and_reset () in
-  let parity = Encoder.simulate_message_in_not_crazy_order t (Array.rev message) in
+  let parity = Encoder.simulate_message t (Array.rev message) in
   print_s [%message (parity : int array) (codeword_poly : int array)];
   [%expect {| ((parity (12 5 8 1)) (codeword_poly (1 8 5 12 1 2 3 4 5 6 7 8 9 10 11))) |}];
   let module Decoder =
@@ -88,7 +88,7 @@ let%expect_test "hardware codec - the encoder testbench reverses the input messa
   let received = Array.concat [ Array.rev message; parity ] in
   received.(3) <- received.(3) lxor 0xf;
   received.(11) <- received.(11) lxor 0xf;
-  let received = Decoder.simulate_codeword_in_not_crazy_order t received in
+  let received = Decoder.simulate_codeword t received in
   print_s [%message (received : int array)];
   [%expect {| (received (11 10 9 8 7 6 5 4 3 2 1 12 5 8 1)) |}]
 ;;

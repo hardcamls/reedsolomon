@@ -149,8 +149,7 @@ let command_decoder =
         in
         let codec = Codec.init params in
         for _ = 1 to num_tests do
-          let message = Util.message () in
-          let codeword = Util.codeword message in
+          let codeword = Array.rev (Util.codeword (Array.rev (Util.message ()))) in
           let error = Util.error (Option.value ~default:params.t errors) in
           let received = Util.( ^. ) codeword error in
           let decoded = Codec.decode codec received in

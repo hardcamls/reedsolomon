@@ -32,7 +32,7 @@ module Test (Standard : Reedsolomon.Standards.Standard) = struct
     (* load data *)
     i.ctrl := Bits.gnd;
     for j = 0 to k - 1 do
-      i.d := Bits.of_int ~width:m data.(k - j - 1);
+      i.d := Bits.of_int ~width:m data.(j);
       Cyclesim.cycle sim
     done;
     (* read parity *)
@@ -41,11 +41,6 @@ module Test (Standard : Reedsolomon.Standards.Standard) = struct
         let r = Bits.to_int !(o.q) in
         Cyclesim.cycle sim;
         r)
-    |> Array.rev
-  ;;
-
-  let simulate_message_in_not_crazy_order t data =
-    simulate_message t (Array.rev data) |> Array.rev
   ;;
 
   let test ?waves num_tests =
@@ -53,7 +48,7 @@ module Test (Standard : Reedsolomon.Standards.Standard) = struct
     for j = 1 to num_tests do
       let data = message () in
       let parity_tb = simulate_message sim data in
-      let parity_sw = parity data in
+      let parity_sw = Array.rev (parity (Array.rev data)) in
       if not ([%compare.equal: int array] parity_tb parity_sw)
       then
         print_s
@@ -72,5 +67,6 @@ include Test (Reedsolomon.Standards.BBCTest)
 
 let%expect_test "test encoder" =
   ignore (test 10 : Waveform.t option);
-  [%expect]
+  [%expect
+    {| |}]
 ;;
