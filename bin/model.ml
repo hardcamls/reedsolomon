@@ -262,6 +262,56 @@ let command_regression =
                 done))]
 ;;
 
+let command_performance =
+  Command.basic
+    ~summary:"Measure performance of fast decoder"
+    [%map_open.Command
+      let params = Codec_args.args
+      and num_tests =
+        flag
+          "-num-tests"
+          (optional_with_default 1_000 int)
+          ~doc:"number of iterations to run test for"
+      in
+      fun () ->
+        let random_errors count =
+          let e = Array.init params.n ~f:Fn.id in
+          Array.permute e;
+          Array.subo e ~len:count
+        in
+        let module Codec = Reedsolomon.Iter_codec in
+        let message = Array.init params.k ~f:(fun i -> i + 1) in
+        let parity = Array.init (params.t * 2) ~f:(fun _ -> 0) in
+        let corrected = Array.init params.n ~f:(fun _ -> 0) in
+        let codec = Codec.init params in
+        for errors = 0 to params.t do
+          Codec.encode codec message parity;
+          let codeword = Array.concat [ message; parity ] in
+          let error_locs = random_errors errors in
+          for i = 0 to errors - 1 do
+            codeword.(error_locs.(i))
+              <- codeword.(error_locs.(i)) lxor ((1 lsl params.m) - 1)
+          done;
+          let start = Time_ns_unix.now () in
+          for _ = 1 to num_tests do
+            ignore (Codec.decode codec codeword corrected : int)
+          done;
+          let _end = Time_ns_unix.now () in
+          let span = Time_ns.diff _end start |> Time_ns.Span.to_sec in
+          let total_bits_mb =
+            let total_bits = params.m * params.k * num_tests in
+            Float.(of_int total_bits / 1_000_000.)
+          in
+          let mb_per_sec = Float.(total_bits_mb / span) in
+          printf
+            "errors=%i %.2fs %.2fmbits --> %.2f mbits/sec\n%!"
+            errors
+            span
+            total_bits_mb
+            mb_per_sec
+        done]
+;;
+
 let command =
   Command.group
     ~summary:"Reedsolomon codec test application"
@@ -271,5 +321,6 @@ let command =
     ; "errors", command_errors
     ; "correctness", command_correctness
     ; "regression", command_regression
+    ; "performance", command_performance
     ]
 ;;
