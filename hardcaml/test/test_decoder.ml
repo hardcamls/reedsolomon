@@ -75,6 +75,8 @@ struct
     corrected
   ;;
 
+  let simulate_codeword_in_not_crazy_order t r = simulate_codeword t (Array.rev r)
+
   let test_one_codeword ?(verbose = false) ?waves () =
     let sim = create_and_reset ?waves () in
     let codeword = codeword (message ()) in

@@ -44,6 +44,10 @@ module Test (Standard : Reedsolomon.Standards.Standard) = struct
     |> Array.rev
   ;;
 
+  let simulate_message_in_not_crazy_order t data =
+    simulate_message t (Array.rev data) |> Array.rev
+  ;;
+
   let test ?waves num_tests =
     let sim = create_and_reset ?waves () in
     for j = 1 to num_tests do

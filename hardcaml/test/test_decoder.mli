@@ -8,4 +8,5 @@ module Test
   val waves : t -> Hardcaml_waveterm.Waveform.t option
   val create_and_reset : ?waves:bool -> unit -> t
   val simulate_codeword : t -> int array -> int array
+  val simulate_codeword_in_not_crazy_order : t -> int array -> int array
 end
