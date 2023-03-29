@@ -4,7 +4,6 @@
 ```ocaml
 open Core
 open Reedsolomon
-let printf = Caml.Printf.printf
 ```
 -->
 
@@ -54,11 +53,11 @@ generate all non-zeros values in the field.
 # let primitive_element = 3
 val primitive_element : int = 3
 # let rec powers g n = 
-    if n=6 then []
+    if n=7 then []
     else 
        g :: powers GF7.(g *: primitive_element) (n+1);;
 val powers : int -> int -> int list = <fun>
-# let powers = powers primitive_element 0
+# let powers = powers primitive_element 1
 val powers : int list = [3; 2; 6; 4; 5; 1]
 ```
 
@@ -66,25 +65,25 @@ We can therefore rewrite non-zero elements of the field as a power of the primit
 element.
 
 ```ocaml
-# let as_powers = Array.init 7 ~f:(fun i -> List.findi powers ~f:(fun power value -> value=i)) 
-val as_powers : (int * int) option array =
-  [|None; Some (5, 1); Some (1, 2); Some (0, 3); Some (3, 4); Some (4, 5);
-    Some (2, 6)|]
-# Array.iter as_powers ~f:(function
-    | None -> printf "Not a power (zero element)\n"
-    | Some(index, value) -> printf "%i = %i ^ %i\n" value primitive_element index);;
-Not a power (zero element)
-1 = 3 ^ 5
-2 = 3 ^ 1
-3 = 3 ^ 0
-4 = 3 ^ 3
-5 = 3 ^ 4
-6 = 3 ^ 2
+# let power_of_value = List.mapi powers ~f:(fun power value -> value, power + 1) |> Map.of_alist_exn (module Int)
+val power_of_value : (int, int, Int.comparator_witness) Map.t = <abstr>
+# for value=0 to 6 do
+    match Map.find power_of_value value with 
+    | None -> printf "%i has no power representation\n" value
+    | Some power -> printf "%i = %i ^ %i\n" value primitive_element power
+  done;;
+0 has no power representation
+1 = 3 ^ 6
+2 = 3 ^ 2
+3 = 3 ^ 1
+4 = 3 ^ 4
+5 = 3 ^ 5
+6 = 3 ^ 3
 - : unit = ()
 ```
 
 This way of expressing field elements will allow us to optimise the multiplication and division
-operations:
+operations given:
 
 $$a * b = pe^i * pe^j = pe^(i+j)$$
 
@@ -101,8 +100,7 @@ module Poly = Poly.Make(GF3);;
 ```ocaml
 # module GF3_2 = Galois.Extension_field(struct 
         module Poly = Poly 
-        (* XXX whats going on here?  mdx isn't finding the cmis for base/core properly. *)
-        let pp = Poly.to_poly (Base.Array.init 3 ~f:(function 0|1 -> 2 | _ -> 1))
+        let pp = Poly.to_poly [| 2; 2; 1 |]
     end)
 module GF3_2 :
   sig
@@ -129,9 +127,15 @@ The polynomial $x$ is a primitive element of this field and we can use it to gen
 elements.
 
 ```ocaml
-# List.fold ~init:Poly.x (List.init 9 ~f:(Fn.const Poly.x)) ~f:(fun a b -> 
-    printf "%s\n" (Poly.to_string a);
-    GF3_2.(a *: b))
+# let powers x = 
+    let rec powers i p = 
+      if i = 9 then [] 
+      else p :: powers (i+1) GF3_2.(p *: x)
+    in
+    powers 1 x
+  ;;
+val powers : GF3_2.t -> GF3_2.t list = <fun>
+# List.iter (powers Poly.x) ~f:(fun poly -> printf "%s\n" (Poly.to_string poly));;
 x
 x + 1
 2.x + 1
@@ -140,20 +144,19 @@ x + 1
 2.x + 2
 x + 2
 1
-x
-- : Poly.t = [|1; 1|]
+- : unit = ()
 ```
 
 ## Practical extension fields
 
 All the extension fields we will consider will have the form $GF(2^n)$.  This 
-is very conventient bacause:
+is very convenient bacause:
 
-1. The base field of order 2 can be represented with a single bit (0 or 1).
+1. The base field of order 2 (which is prime!) can be represented with a single bit (0 or 1).
 2. Operations on the base field just become simple xor/and.
 3. Polymonials over the field can be represented as simple integer valeus.
 
-For example, $GF(2^8)$ (also writtem as $GF(256)$ ) has field elements which can 
+For example, $GF(2^8)$ (also written as $GF(256)$ ) has field elements which can
 be represented by a single 8 bit char type.
 
 The galois module offers an optimised implementation of such fields.
